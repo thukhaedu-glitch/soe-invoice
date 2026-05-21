@@ -8,38 +8,104 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     
     <style>
-    /* ADVANCED PRINT & PDF EXPORT STYLING */
-    @media print {
-        html, body { width: 210mm; height: 297mm; margin: 0; padding: 0; background: white !important; }
-        body * { visibility: hidden !important; }
-        #invoice-print-area, #invoice-print-area * { visibility: visible !important; }
-        #invoice-modal { position: absolute !important; inset: 0 !important; display: block !important; background: white !important; overflow: visible !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; }
-        #invoice-print-area { position: relative !important; width: 100% !important; max-width: 100% !important; margin: 0 auto !important; padding: 15mm !important; box-sizing: border-box !important; background: white !important; box-shadow: none !important; overflow: visible !important; }
-        .no-print { display: none !important; }
-        @page { size: A4; margin: 10mm; }
-        #invoice-print-area { page-break-before: avoid !important; break-before: avoid !important; }
-    }
-    #invoice-print-area { background: white; padding: 20px; }
-    
-    /* Paid / Refunded Stamp Styling */
-    .invoice-stamp { position: absolute; top: 15%; left: 50%; transform: translate(-50%, -50%) rotate(-12deg); border: 4px dashed; text-transform: uppercase; font-size: 2rem; font-weight: 900; padding: 0.5rem 1.5rem; border-radius: 0.5rem; opacity: 0.25; letter-spacing: 0.2rem; pointer-events: none; }
-    .stamp-paid { color: #16a34a; border-color: #16a34a; }
-    .stamp-refund { color: #dc2626; border-color: #dc2626; }
-    
-    /* Sortable Header Cursor */
-    .sortable-header { cursor: pointer; user-select: none; }
-    .sortable-header:hover { background-color: #f3f4f6; }
+        /* ADVANCED PRINT & PDF EXPORT STYLING */
+        @media print {
+            html, body { width: 210mm; height: 297mm; margin: 0; padding: 0; background: white !important; }
+            body * { visibility: hidden !important; }
+            #invoice-print-area, #invoice-print-area * { visibility: visible !important; }
+            #invoice-modal { position: absolute !important; inset: 0 !important; display: block !important; background: white !important; overflow: visible !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; }
+            #invoice-print-area { position: relative !important; width: 100% !important; max-width: 100% !important; margin: 0 auto !important; padding: 15mm !important; box-sizing: border-box !important; background: white !important; box-shadow: none !important; overflow: visible !important; }
+            .no-print { display: none !important; }
+            @page { size: A4; margin: 10mm; }
+            #invoice-print-area { page-break-before: avoid !important; break-before: avoid !important; }
+        }
+        #invoice-print-area { background: white; padding: 20px; }
+        /* Paid / Refunded Stamp Styling */
+        .invoice-stamp { position: absolute; top: 15%; left: 50%; transform: translate(-50%, -50%) rotate(-12deg); border: 4px dashed; text-transform: uppercase; font-size: 2rem; font-weight: 900; padding: 0.5rem 1.5rem; border-radius: 0.5rem; opacity: 0.25; letter-spacing: 0.2rem; pointer-events: none; }
+        .stamp-paid { color: #16a34a; border-color: #16a34a; }
+        .stamp-refund { color: #dc2626; border-color: #dc2626; }
+        
+        /* Table Scrollbar for Mobile */
+        .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .cursor-pointer:hover { background-color: #f3f4f6; }
+        .sort-icon { display: inline-block; width: 12px; margin-left: 4px; color: #9ca3af; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
 
-    <!-- Auth Screen -->
+    <div id="public-verify-screen" class="hidden fixed inset-0 z-[10000] min-h-screen bg-gray-100 flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white max-w-md w-full rounded-2xl shadow-2xl overflow-hidden relative my-8">
+            <div class="bg-blue-600 p-6 text-center text-white relative">
+                <div id="verify-status-icon" class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
+                    <svg class="w-8 h-8 text-blue-600 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                </div>
+                <h2 id="verify-status-title" class="text-2xl font-black tracking-wide">Checking Database...</h2>
+                <p id="verify-status-desc" class="text-blue-100 text-sm mt-1 font-medium">Verifying invoice authenticity securely</p>
+            </div>
+            
+            <div id="verify-details-container" class="p-6 space-y-5 hidden">
+                <div class="border-b border-gray-100 pb-4 text-center">
+                    <h3 id="v-brand-name" class="font-black text-gray-900 text-lg uppercase tracking-widest">NIMBA SYSTEM</h3>
+                    <p class="text-xs text-gray-500 font-medium">Digital Invoice Verification</p>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl text-sm border border-gray-100">
+                    <div>
+                        <p class="text-[10px] uppercase text-gray-500 font-bold mb-0.5">Order ID</p>
+                        <p id="v-id" class="font-bold text-blue-700">#</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] uppercase text-gray-500 font-bold mb-0.5">Date</p>
+                        <p id="v-date" class="font-bold text-gray-800"></p>
+                    </div>
+                    <div class="col-span-2">
+                        <p class="text-[10px] uppercase text-gray-500 font-bold mb-0.5">Customer Name</p>
+                        <p id="v-customer" class="font-bold text-gray-800"></p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] uppercase text-gray-500 font-bold mb-0.5">Payment Status</p>
+                        <p id="v-pay-status" class="font-bold"></p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] uppercase text-gray-500 font-bold mb-0.5">Delivery Status</p>
+                        <p id="v-del-status" class="font-bold"></p>
+                    </div>
+                </div>
+
+                <div>
+                    <p class="text-xs uppercase text-gray-500 font-bold mb-2 tracking-wider">Purchased Items</p>
+                    <div class="border rounded-xl overflow-hidden border-gray-100 table-container">
+                        <table class="w-full text-left text-xs min-w-[250px]">
+                            <thead class="bg-gray-50 border-b border-gray-100 text-gray-600">
+                                <tr><th class="p-2">Item</th><th class="p-2 text-center">Qty</th><th class="p-2 text-right">Total</th></tr>
+                            </thead>
+                            <tbody id="v-items-body" class="divide-y divide-gray-100 bg-white"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="border-t border-dashed border-gray-300 pt-4 flex justify-between items-center">
+                    <span class="text-sm font-bold text-gray-500">Total Validated Amount:</span>
+                    <span id="v-total" class="text-xl font-black text-blue-700">0 MMK</span>
+                </div>
+            </div>
+            
+            <div id="verify-error-container" class="p-8 text-center hidden">
+                <p class="text-gray-600 font-medium">We couldn't find an invoice matching this ID in our system. Please check with the merchant.</p>
+            </div>
+
+            <div class="bg-slate-50 p-3 text-center border-t border-gray-100 mt-2">
+                <p class="text-[10px] text-gray-400 font-bold tracking-wider">VERIFIED BY REAL-TIME CLOUD DB</p>
+            </div>
+        </div>
+    </div>
+
     <div id="auth-lock-screen" class="fixed inset-0 bg-slate-900 z-[9999] flex items-center justify-center p-4">
         <div class="bg-white/10 backdrop-blur-md border border-white/20 p-8 rounded-2xl max-w-sm w-full space-y-6 shadow-2xl text-center">
             <div class="space-y-2">
                 <div class="w-20 h-20 bg-blue-600 rounded-2xl mx-auto flex items-center justify-center text-white text-3xl font-black shadow-lg">N</div>
-                <h2 class="text-2xl font-black text-white tracking-wide pt-2">စိုးပါပလာ Enterprise System</h2>
-                <p class="text-xs text-slate-400">Business Enterprise Software </p>
+                <h2 class="text-2xl font-black text-white tracking-wide pt-2">စိုးပါပလာ Enterprise</h2>
+                <p class="text-xs text-slate-400">Business Enterprise Software</p>
             </div>
             
             <form id="firebase-login-form" class="space-y-4 text-left">
@@ -60,122 +126,116 @@
         </div>
     </div>
 
-    <!-- Main Workspace -->
-    <div id="app-workspace-root" class="flex h-screen overflow-hidden hidden">
+    <div id="app-workspace-root" class="flex flex-col md:flex-row h-screen overflow-hidden hidden">
         
-        <!-- Mobile Sidebar Backdrop -->
-        <div id="mobile-sidebar-backdrop" class="fixed inset-0 bg-slate-900/60 z-[60] hidden md:hidden" onclick="toggleSidebar()"></div>
+        <!-- Mobile Header (Hamburger Menu) -->
+        <div class="md:hidden flex justify-between items-center bg-slate-900 text-white p-4 z-40 shadow-md">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-blue-600 rounded flex items-center justify-center font-bold">N</div>
+                <span class="font-bold text-lg">Nimba System</span>
+            </div>
+            <button onclick="toggleSidebar()" class="text-2xl focus:outline-none">&#9776;</button>
+        </div>
 
-        <!-- Sidebar -->
-        <div id="app-sidebar" class="fixed inset-y-0 left-0 z-[70] w-64 bg-slate-900 text-white p-5 flex flex-col justify-between transition-transform duration-300 transform -translate-x-full md:relative md:translate-x-0 no-print h-full">
+        <!-- Sidebar Navigation -->
+        <div id="sidebar" class="fixed md:static inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out w-64 bg-slate-900 text-white p-5 flex flex-col justify-between z-50 h-full shadow-2xl md:shadow-none">
             <div>
-                <button onclick="toggleSidebar()" class="md:hidden absolute top-4 right-4 text-gray-400 hover:text-white">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-                <h1 class="text-xl font-bold mb-8 flex flex-col items-center gap-2 text-center mt-4 md:mt-0">
-                    <img id="side-brand-logo-img" src="" class="w-16 h-16 rounded-lg object-contain bg-white p-1 hidden" alt="Logo">
-                    <span id="side-brand-name">Nimba System</span>
-                </h1>
-                <nav class="space-y-2">
+                <div class="flex justify-between items-center mb-8">
+                    <h1 class="text-xl font-bold flex flex-col items-center gap-2 text-center w-full">
+                        <img id="side-brand-logo-img" src="" class="w-16 h-16 rounded-lg object-contain bg-white p-1 hidden" alt="Logo">
+                        <span id="side-brand-name">Nimba System</span>
+                    </h1>
+                    <button onclick="toggleSidebar()" class="md:hidden text-gray-400 hover:text-white absolute top-4 right-4 text-2xl">&times;</button>
+                </div>
+                <nav class="space-y-2 overflow-y-auto max-h-[60vh] md:max-h-none pr-1">
                     <button onclick="switchTab('dashboard', this)" class="tab-btn w-full text-left py-2.5 px-4 rounded bg-blue-600 font-medium transition">Dashboard</button>
                     <button onclick="switchTab('internal-cards', this)" class="tab-btn w-full text-left py-2.5 px-4 rounded hover:bg-slate-800 transition">Internal Work Cards</button>
                     <button onclick="switchTab('sales', this)" class="tab-btn w-full text-left py-2.5 px-4 rounded hover:bg-slate-800 transition">Sale Orders</button>
                     <button onclick="switchTab('purchases', this)" class="tab-btn w-full text-left py-2.5 px-4 rounded hover:bg-slate-800 transition">Purchases & Expenses</button>
-                    <button onclick="switchTab('customers', this)" class="tab-btn w-full text-left py-2.5 px-4 rounded hover:bg-slate-800 transition">Customers</button>
                     <button onclick="switchTab('credit', this)" class="tab-btn w-full text-left py-2.5 px-4 rounded hover:bg-slate-800 transition">Credit Payments</button>
+                    <button onclick="switchTab('customers', this)" class="tab-btn w-full text-left py-2.5 px-4 rounded hover:bg-slate-800 transition">Customers</button>
                     <button onclick="switchTab('settings', this)" class="tab-btn w-full text-left py-2.5 px-4 rounded hover:bg-slate-800 transition">Settings</button>
                 </nav>
             </div>
             
-            <div class="space-y-4 border-t border-slate-700 pt-4">
+            <div class="space-y-4 border-t border-slate-700 pt-4 mt-4">
                 <button id="system-logout-btn" class="w-full bg-slate-800 hover:bg-red-900/40 border border-slate-700 hover:border-red-700 text-slate-300 hover:text-red-200 py-2 px-4 rounded text-xs font-bold transition flex items-center justify-center gap-2">
                     Logout (အကောင့်ထွက်ရန်)
                 </button>
-                <div class="text-xs text-slate-400 text-center">
-                    v2.1.0 - Firebase Production Hub
-                </div>
+                <div class="text-[10px] text-slate-400 text-center">v2.1.0 - Firebase Hub</div>
             </div>
         </div>
-        
-        <div class="flex-1 flex flex-col overflow-y-auto w-full relative">
+
+        <!-- Sidebar Overlay for Mobile -->
+        <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden"></div>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col h-full overflow-hidden bg-gray-50">
             
-            <header class="bg-white border-b border-gray-200 px-4 md:px-8 py-4 flex justify-between items-center shadow-sm no-print sticky top-0 z-40">
-                <div class="flex items-center gap-3">
-                    <button onclick="toggleSidebar()" class="md:hidden text-gray-600 hover:text-gray-900 focus:outline-none">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-                    </button>
-                    <h2 id="page-title" class="text-xl md:text-2xl font-bold text-gray-850">Dashboard</h2>
-                </div>
+            <header class="bg-white border-b border-gray-200 px-4 md:px-8 py-4 flex justify-between items-center shadow-sm no-print z-10">
+                <h2 id="page-title" class="text-xl md:text-2xl font-bold text-gray-850">Dashboard</h2>
                 <div class="flex items-center gap-4">
-                    <span id="sync-badge" class="bg-amber-100 text-amber-800 text-[10px] md:text-xs px-2 py-1 md:px-3 rounded-full font-semibold">Connecting...</span>
+                    <span id="sync-badge" class="bg-amber-100 text-amber-800 text-xs px-3 py-1 rounded-full font-semibold whitespace-nowrap">Connecting Cloud...</span>
                 </div>
             </header>
 
-            <main class="p-4 md:p-8 flex-1 no-print overflow-x-hidden">
-                <!-- Dashboard Tab -->
+            <main class="p-4 md:p-8 flex-1 overflow-y-auto no-print">
                 <div id="tab-dashboard" class="tab-content space-y-6">
-                    <div class="bg-white p-4 rounded-xl shadow-xs border border-gray-100 flex flex-wrap gap-4 items-center">
+                    <div class="bg-white p-4 rounded-xl shadow-xs border border-gray-100 flex flex-col md:flex-row gap-4 items-start md:items-center">
                         <span class="text-sm font-bold text-gray-700">Filters:</span>
-                        <div>
-                            <select id="dash-filter-month" onchange="renderDashboard()" class="p-2 border border-gray-300 rounded-lg text-sm">
+                        <div class="grid grid-cols-2 md:flex gap-2 w-full md:w-auto">
+                            <select id="dash-filter-month" onchange="renderDashboard()" class="p-2 border border-gray-300 rounded-lg text-sm w-full">
                                 <option value="">All Months</option>
                                 <option value="01">January</option><option value="02">February</option><option value="03">March</option>
                                 <option value="04">April</option><option value="05">May</option><option value="06">June</option>
                                 <option value="07">July</option><option value="08">August</option><option value="09">September</option>
                                 <option value="10">October</option><option value="11">November</option><option value="12">December</option>
                             </select>
-                        </div>
-                        <div>
-                            <select id="dash-filter-region" onchange="renderDashboard()" class="p-2 border border-gray-300 rounded-lg text-sm">
+                            <select id="dash-filter-region" onchange="renderDashboard()" class="p-2 border border-gray-300 rounded-lg text-sm w-full">
                                 <option value="">All Regions</option>
                             </select>
-                        </div>
-                        <div>
-                            <select id="dash-filter-payment" onchange="renderDashboard()" class="p-2 border border-gray-300 rounded-lg text-sm">
-                                <option value="">All Payment Methods</option>
+                            <select id="dash-filter-payment" onchange="renderDashboard()" class="p-2 border border-gray-300 rounded-lg text-sm w-full col-span-2 md:col-span-1">
+                                <option value="">All Payments</option>
+                                <option value="Done">Paid (Done)</option>
+                                <option value="Pending">Pending</option>
+                                <option value="Refunded">Refunded</option>
                             </select>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                        <div class="bg-white p-4 rounded-xl shadow-xs border border-gray-100">
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-white p-4 rounded-xl shadow-xs border border-gray-100 border-t-4 border-t-blue-500">
                             <p class="text-xs text-gray-500 font-medium">Total Revenue</p>
-                            <h3 id="dash-revenue" class="text-lg font-bold mt-1 text-blue-600">0 MMK</h3>
+                            <h3 id="dash-revenue" class="text-lg md:text-xl font-bold mt-1 text-blue-600">0 MMK</h3>
                         </div>
-                        <div class="bg-white p-4 rounded-xl shadow-xs border border-gray-100">
-                            <p class="text-xs text-gray-500 font-medium" title="Cost of Goods Sold from Orders">Total Cost (COGS)</p>
-                            <h3 id="dash-cost" class="text-lg font-bold mt-1 text-orange-500">0 MMK</h3>
+                        <div class="bg-white p-4 rounded-xl shadow-xs border border-gray-100 border-t-4 border-t-amber-500">
+                            <p class="text-xs text-gray-500 font-medium flex items-center justify-between">Total Cost (COGS)</p>
+                            <h3 id="dash-cogs" class="text-lg md:text-xl font-bold mt-1 text-amber-600">0 MMK</h3>
                         </div>
-                        <div class="bg-white p-4 rounded-xl shadow-xs border border-gray-100 cursor-pointer hover:shadow-md transition" onclick="showExpenseBreakdown()">
-                            <p class="text-xs text-gray-500 font-medium" title="Total Cost + All Purchase/Expenses (Click for detail)">Total Expenses 🔍</p>
-                            <h3 id="dash-expenses" class="text-lg font-bold mt-1 text-red-500">0 MMK</h3>
+                        <div onclick="openExpenseBreakdown()" class="bg-white p-4 rounded-xl shadow-md hover:shadow-lg transition cursor-pointer border border-gray-100 border-t-4 border-t-red-500 relative group">
+                            <div class="absolute inset-0 bg-red-50 opacity-0 group-hover:opacity-100 transition rounded-xl"></div>
+                            <div class="relative">
+                                <p class="text-xs text-gray-500 font-medium flex items-center gap-1">Total Expenses <span class="bg-gray-200 text-[10px] px-1 rounded">Click details</span></p>
+                                <h3 id="dash-expenses" class="text-lg md:text-xl font-bold mt-1 text-red-600">0 MMK</h3>
+                            </div>
                         </div>
-                        <div class="bg-white p-4 rounded-xl shadow-xs border border-gray-100">
-                            <p class="text-xs text-gray-500 font-medium" title="Revenue - Total Expenses">Net Profit Amount</p>
-                            <h3 id="dash-margin" class="text-lg font-bold mt-1 text-green-600">0 MMK</h3>
-                        </div>
-                        <div class="bg-white p-4 rounded-xl shadow-xs border border-gray-100">
-                            <p class="text-xs text-gray-500 font-medium">Total Orders</p>
-                            <h3 id="dash-orders" class="text-lg font-bold mt-1 text-purple-600">0</h3>
-                        </div>
-                        <div class="bg-white p-4 rounded-xl shadow-xs border border-gray-100">
-                            <p class="text-xs text-gray-500 font-medium">Refund Orders</p>
-                            <h3 id="dash-refunds" class="text-lg font-bold mt-1 text-pink-600">0</h3>
+                        <div class="bg-white p-4 rounded-xl shadow-xs border border-gray-100 border-t-4 border-t-green-500">
+                            <p class="text-xs text-gray-500 font-medium">Net Profit Amount</p>
+                            <h3 id="dash-margin" class="text-lg md:text-xl font-bold mt-1 text-green-600">0 MMK</h3>
                         </div>
                     </div>
 
-                    <div class="bg-white p-4 md:p-6 rounded-xl shadow-xs border border-gray-100">
+                    <div class="bg-white p-6 rounded-xl shadow-xs border border-gray-100">
                         <h4 class="text-lg font-semibold mb-4">Recent Sales Breakdown</h4>
-                        <div class="overflow-x-auto w-full">
-                            <table class="w-full text-left border-collapse whitespace-nowrap">
+                        <div class="table-container">
+                            <table class="w-full text-left border-collapse min-w-[600px]">
                                 <thead>
-                                    <tr class="bg-gray-50 border-b border-gray-200 text-gray-600 text-sm font-semibold">
-                                        <th class="p-3 sortable-header" onclick="sortDashboardTable('id')">SO ID <span id="dash-sort-id"></span></th>
-                                        <th class="p-3 sortable-header" onclick="sortDashboardTable('date')">Date <span id="dash-sort-date"></span></th>
-                                        <th class="p-3 sortable-header" onclick="sortDashboardTable('region')">Region <span id="dash-sort-region"></span></th>
-                                        <th class="p-3 sortable-header" onclick="sortDashboardTable('paymentMethod')">Payment Method <span id="dash-sort-paymentMethod"></span></th>
-                                        <th class="p-3 sortable-header" onclick="sortDashboardTable('totalAmount')">Amount <span id="dash-sort-totalAmount"></span></th>
-                                        <th class="p-3">Actual Profit Margin (%)</th>
+                                    <tr class="bg-gray-50 border-b border-gray-200 text-gray-600 text-sm font-semibold select-none">
+                                        <th class="p-3 cursor-pointer hover:bg-gray-100" onclick="sortDashboard('id')">SO ID <span class="sort-icon" id="ds-icon-id">↕</span></th>
+                                        <th class="p-3 cursor-pointer hover:bg-gray-100" onclick="sortDashboard('date')">Date <span class="sort-icon" id="ds-icon-date">↕</span></th>
+                                        <th class="p-3 cursor-pointer hover:bg-gray-100" onclick="sortDashboard('region')">Region <span class="sort-icon" id="ds-icon-region">↕</span></th>
+                                        <th class="p-3 cursor-pointer hover:bg-gray-100" onclick="sortDashboard('paymentMethod')">Payment Method <span class="sort-icon" id="ds-icon-paymentMethod">↕</span></th>
+                                        <th class="p-3 cursor-pointer hover:bg-gray-100 text-right" onclick="sortDashboard('totalAmount')">Amount <span class="sort-icon" id="ds-icon-totalAmount">↕</span></th>
                                     </tr>
                                 </thead>
                                 <tbody id="dash-table-body" class="divide-y divide-gray-100 text-sm"></tbody>
@@ -184,59 +244,63 @@
                     </div>
                 </div>
 
-                <!-- Internal Cards Tab -->
                 <div id="tab-internal-cards" class="tab-content hidden space-y-6">
-                    <div class="bg-white p-6 rounded-xl shadow-xs border border-gray-100">
+                    <div class="bg-white p-4 md:p-6 rounded-xl shadow-xs border border-gray-100">
                         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                             <div>
                                 <h3 class="text-xl font-bold text-slate-800">Internal Team Work Cards</h3>
-                                <p class="text-xs text-gray-500 mt-1">Production and operations verification workspace dashboard</p>
+                                <p class="text-xs text-gray-500 mt-1">Production and operations workspace</p>
                             </div>
-                            <div class="flex flex-col md:flex-row gap-2 w-full md:w-auto">
-                                <input type="text" id="card-search" oninput="renderInternalCards()" placeholder="Search Name or Phone..." class="w-full md:w-auto p-2 border border-gray-300 rounded-lg text-sm focus:outline-blue-500">
-                                <select id="card-filter-status" onchange="renderInternalCards()" class="w-full md:w-auto p-2 border border-gray-300 rounded-lg text-sm">
+                            <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                                <select id="card-filter-del" onchange="renderInternalCards()" class="p-2 border border-gray-300 rounded-lg text-sm w-full sm:w-auto">
                                     <option value="">All Delivery Status</option>
+                                    <option value="Pending">Pending</option>
+                                    <option value="Dispatched">Dispatched</option>
+                                    <option value="Delivered">Delivered</option>
                                 </select>
-                                <select id="card-sort-date" onchange="renderInternalCards()" class="w-full md:w-auto p-2 border border-gray-300 rounded-lg text-sm bg-gray-50">
-                                    <option value="desc">Newest First</option>
-                                    <option value="asc">Oldest First</option>
+                                <select id="card-sort-date" onchange="renderInternalCards()" class="p-2 border border-gray-300 rounded-lg text-sm w-full sm:w-auto">
+                                    <option value="new">Newest First</option>
+                                    <option value="old">Oldest First</option>
                                 </select>
+                                <input type="text" id="card-search" oninput="renderInternalCards()" placeholder="Search Name/Phone..." class="p-2 border border-gray-300 rounded-lg text-sm w-full sm:w-64 focus:outline-blue-500">
                             </div>
                         </div>
                         <div id="internal-cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
                     </div>
                 </div>
 
-                <!-- Sales Tab -->
                 <div id="tab-sales" class="tab-content hidden space-y-6">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                        <div class="flex flex-col md:flex-row gap-3 w-full md:w-3/4">
-                            <input type="text" id="so-search" oninput="filterSales()" placeholder="Search Name, Phone, or SO ID..." class="w-full md:w-1/3 p-2 border border-gray-300 rounded-lg text-sm focus:outline-blue-500">
-                            <select id="so-filter-payment" onchange="filterSales()" class="w-full md:w-auto p-2 border border-gray-300 rounded-lg text-sm">
+                        <div class="flex flex-wrap gap-2 w-full md:w-auto">
+                            <input type="text" id="so-search" oninput="filterSales()" placeholder="Search SO ID, Name or Phone..." class="w-full sm:w-auto flex-1 sm:flex-none p-2 border border-gray-300 rounded-lg text-sm focus:outline-blue-500">
+                            <select id="so-filter-payment" onchange="filterSales()" class="p-2 border border-gray-300 rounded-lg text-sm flex-1 sm:flex-none">
                                 <option value="">All Payments</option>
                                 <option value="Pending">Pending</option>
                                 <option value="Done">Done</option>
                                 <option value="Refunded">Refunded</option>
                             </select>
-                            <select id="so-filter-delivery" onchange="filterSales()" class="w-full md:w-auto p-2 border border-gray-300 rounded-lg text-sm">
-                                <option value="">All Delivery Status</option>
+                            <select id="so-filter-delivery" onchange="filterSales()" class="p-2 border border-gray-300 rounded-lg text-sm flex-1 sm:flex-none">
+                                <option value="">All Delivery</option>
+                                <option value="Pending">Pending</option>
+                                <option value="Dispatched">Dispatched</option>
+                                <option value="Delivered">Delivered</option>
                             </select>
                         </div>
-                        <button onclick="openNewOrderModal()" class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold flex justify-center items-center gap-1">
+                        <button onclick="openNewOrderModal()" class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-1">
                             + Create Sale Order
                         </button>
                     </div>
-                    
-                    <div class="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden w-full overflow-x-auto">
-                        <table class="w-full text-left border-collapse whitespace-nowrap">
+
+                    <div class="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden table-container">
+                        <table class="w-full text-left border-collapse min-w-[900px]">
                             <thead>
                                 <tr class="bg-gray-50 border-b border-gray-200 text-gray-600 text-sm font-semibold">
                                     <th class="p-3">SO ID</th>
                                     <th class="p-3">Customer</th>
                                     <th class="p-3">Date</th>
                                     <th class="p-3">Total</th>
-                                    <th class="p-3">Payment</th>
-                                    <th class="p-3">Delivery</th>
+                                    <th class="p-3 w-32">Payment Action</th>
+                                    <th class="p-3 w-32">Delivery Action</th>
                                     <th class="p-3 text-right">Actions</th>
                                 </tr>
                             </thead>
@@ -245,17 +309,16 @@
                     </div>
                 </div>
 
-                <!-- Purchases Tab -->
                 <div id="tab-purchases" class="tab-content hidden space-y-6">
-                    <form id="expense-form" onsubmit="saveExpense(event)" class="bg-white p-4 md:p-6 rounded-xl shadow-xs border border-gray-100 grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                    <form id="expense-form" onsubmit="saveExpense(event)" class="bg-white p-4 md:p-6 rounded-xl shadow-xs border border-gray-100 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-end">
                         <input type="hidden" id="edit-exp-index" value="">
-                        <div>
+                        <div class="sm:col-span-2 md:col-span-1">
                             <label class="block text-xs font-semibold text-gray-600 mb-1">Date & Time</label>
                             <input type="datetime-local" id="exp-datetime" required class="w-full p-2 border border-gray-300 rounded-lg text-sm">
                         </div>
-                        <div>
+                        <div class="sm:col-span-2 md:col-span-1">
                             <label class="block text-xs font-semibold text-gray-600 mb-1">Type / Description</label>
-                            <input type="text" id="exp-desc" required placeholder="e.g., Raw Materials, Rent" class="w-full p-2 border border-gray-300 rounded-lg text-sm">
+                            <input type="text" id="exp-desc" required placeholder="e.g., Rent, Facebook Ads" class="w-full p-2 border border-gray-300 rounded-lg text-sm">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-gray-600 mb-1">Amount (MMK)</label>
@@ -264,54 +327,24 @@
                         <div>
                             <label class="block text-xs font-semibold text-gray-600 mb-1">Category</label>
                             <select id="exp-cat" class="w-full p-2 border border-gray-300 rounded-lg text-sm">
-                                <option value="Product Purchase">Product Purchase (Stock In)</option>
-                                <option value="Marketing">Marketing & PR</option>
                                 <option value="Operations">Operations / Logistics</option>
+                                <option value="Marketing">Marketing & PR</option>
+                                <option value="Salary">Salaries & Wages</option>
+                                <option value="Product Purchase">Product Purchase (Stock In)</option>
                                 <option value="Other">Other Expenses</option>
                             </select>
                         </div>
-                        <button type="submit" id="btn-submit-expense" class="w-full md:w-auto bg-slate-900 text-white p-2 rounded-lg font-semibold text-sm hover:bg-slate-800">Add Record</button>
+                        <button type="submit" id="btn-submit-expense" class="w-full sm:col-span-2 md:col-span-1 bg-slate-900 text-white p-2 rounded-lg font-semibold text-sm hover:bg-slate-800">Add Record</button>
                     </form>
 
-                    <div class="bg-white p-4 rounded-xl shadow-xs border border-gray-100 flex flex-wrap gap-4 items-center">
-                        <span class="text-sm font-bold text-gray-700">Filters:</span>
-                        <div>
-                            <select id="pur-filter-cat" onchange="renderExpensesTable()" class="p-2 border border-gray-300 rounded-lg text-sm">
-                                <option value="">All Categories</option>
-                                <option value="Product Purchase">Product Purchase (Stock In)</option>
-                                <option value="Marketing">Marketing & PR</option>
-                                <option value="Operations">Operations / Logistics</option>
-                                <option value="Other">Other Expenses</option>
-                            </select>
-                        </div>
-                        <div>
-                            <select id="pur-filter-month" onchange="renderExpensesTable()" class="p-2 border border-gray-300 rounded-lg text-sm">
-                                <option value="">All Months</option>
-                                <option value="01">January</option><option value="02">February</option><option value="03">March</option>
-                                <option value="04">April</option><option value="05">May</option><option value="06">June</option>
-                                <option value="07">July</option><option value="08">August</option><option value="09">September</option>
-                                <option value="10">October</option><option value="11">November</option><option value="12">December</option>
-                            </select>
-                        </div>
-                        <div>
-                            <select id="pur-filter-year" onchange="renderExpensesTable()" class="p-2 border border-gray-300 rounded-lg text-sm">
-                                <option value="">All Years</option>
-                                <option value="2024">2024</option>
-                                <option value="2025">2025</option>
-                                <option value="2026">2026</option>
-                                <option value="2027">2027</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden w-full overflow-x-auto">
-                        <table class="w-full text-left border-collapse whitespace-nowrap">
+                    <div class="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden table-container">
+                        <table class="w-full text-left border-collapse min-w-[700px]">
                             <thead>
-                                <tr class="bg-gray-50 border-b border-gray-200 text-gray-600 text-sm font-semibold">
-                                    <th class="p-3 sortable-header" onclick="sortExpenseTable('datetime')">Date & Time <span id="exp-sort-datetime"></span></th>
-                                    <th class="p-3 sortable-header" onclick="sortExpenseTable('desc')">Description <span id="exp-sort-desc"></span></th>
-                                    <th class="p-3 sortable-header" onclick="sortExpenseTable('cat')">Category <span id="exp-sort-cat"></span></th>
-                                    <th class="p-3 sortable-header" onclick="sortExpenseTable('amount')">Amount <span id="exp-sort-amount"></span></th>
+                                <tr class="bg-gray-50 border-b border-gray-200 text-gray-600 text-sm font-semibold select-none">
+                                    <th class="p-3 cursor-pointer hover:bg-gray-100" onclick="sortExpenses('datetime')">Date & Time <span class="sort-icon" id="pe-icon-datetime">↕</span></th>
+                                    <th class="p-3 cursor-pointer hover:bg-gray-100" onclick="sortExpenses('desc')">Description <span class="sort-icon" id="pe-icon-desc">↕</span></th>
+                                    <th class="p-3 cursor-pointer hover:bg-gray-100" onclick="sortExpenses('cat')">Category <span class="sort-icon" id="pe-icon-cat">↕</span></th>
+                                    <th class="p-3 cursor-pointer hover:bg-gray-100" onclick="sortExpenses('amount')">Amount <span class="sort-icon" id="pe-icon-amount">↕</span></th>
                                     <th class="p-3 text-right">Actions</th>
                                 </tr>
                             </thead>
@@ -319,10 +352,44 @@
                         </table>
                     </div>
                 </div>
+                
+                <div id="tab-credit" class="tab-content hidden space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-white p-6 rounded-xl shadow-xs border border-gray-100 border-l-4 border-l-green-500">
+                            <p class="text-sm text-gray-500 font-bold uppercase tracking-wider mb-1">Total Paid Amount</p>
+                            <h3 id="credit-total-paid" class="text-2xl font-black text-green-600">0 MMK</h3>
+                            <p class="text-xs text-gray-400 mt-2">Cost price already settled with suppliers</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-xs border border-gray-100 border-l-4 border-l-red-500">
+                            <p class="text-sm text-gray-500 font-bold uppercase tracking-wider mb-1">Total Unpaid Amount</p>
+                            <h3 id="credit-total-unpaid" class="text-2xl font-black text-red-600">0 MMK</h3>
+                            <p class="text-xs text-gray-400 mt-2">Pending cost price needed to transfer/pay</p>
+                        </div>
+                    </div>
 
-                <!-- Customers Tab -->
+                    <div class="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden table-container">
+                        <table class="w-full text-left border-collapse min-w-[700px]">
+                            <thead>
+                                <tr class="bg-gray-50 border-b border-gray-200 text-gray-600 text-sm font-semibold">
+                                    <th class="p-3">Order ID</th>
+                                    <th class="p-3">Order Date</th>
+                                    <th class="p-3">Customer</th>
+                                    <th class="p-3">Total Cost (Payable)</th>
+                                    <th class="p-3">Status</th>
+                                    <th class="p-3 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="credit-table-body" class="divide-y divide-gray-100 text-sm"></tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <div id="tab-customers" class="tab-content hidden space-y-6">
-                    <form id="customer-form" onsubmit="saveCustomer(event)" class="bg-white p-4 md:p-6 rounded-xl shadow-xs border border-gray-100 grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                    <div class="flex flex-col md:flex-row justify-between gap-4 bg-white p-4 rounded-xl shadow-xs border border-gray-100">
+                        <input type="text" id="cust-search" oninput="renderCustomersTable()" placeholder="Search Name or Phone..." class="w-full md:w-1/3 p-2 border border-gray-300 rounded-lg text-sm focus:outline-blue-500">
+                    </div>
+
+                    <form id="customer-form" onsubmit="saveCustomer(event)" class="bg-white p-4 md:p-6 rounded-xl shadow-xs border border-gray-100 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-end">
                         <div>
                             <label class="block text-xs font-semibold text-gray-600 mb-1">Customer Name</label>
                             <input type="text" id="cust-name" required class="w-full p-2 border border-gray-300 rounded-lg text-sm">
@@ -339,22 +406,17 @@
                             <label class="block text-xs font-semibold text-gray-600 mb-1">Address</label>
                             <input type="text" id="cust-address" required class="w-full p-2 border border-gray-300 rounded-lg text-sm">
                         </div>
-                        <button type="submit" class="w-full md:w-auto bg-blue-600 text-white p-2 rounded-lg font-semibold text-sm hover:bg-blue-700">Add Customer</button>
+                        <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded-lg font-semibold text-sm hover:bg-blue-700">Add Customer</button>
                     </form>
-                    
-                    <div class="flex justify-between items-center">
-                        <input type="text" id="cust-search" oninput="renderCustomersTable()" placeholder="Search Name or Phone..." class="w-full md:w-1/3 p-2 border border-gray-300 rounded-lg text-sm focus:outline-blue-500">
-                    </div>
 
-                    <div class="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden w-full overflow-x-auto">
-                        <table class="w-full text-left border-collapse whitespace-nowrap">
+                    <div class="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden table-container">
+                        <table class="w-full text-left border-collapse min-w-[700px]">
                             <thead>
                                 <tr class="bg-gray-50 border-b border-gray-200 text-gray-600 text-sm font-semibold">
                                     <th class="p-3">Name</th>
                                     <th class="p-3">Phone</th>
                                     <th class="p-3">Address</th>
-                                    <th class="p-3">Social Link</th>
-                                    <th class="p-3 text-right">Actions</th>
+                                    <th class="p-3 text-center">History</th>
                                 </tr>
                             </thead>
                             <tbody id="customer-table-body" class="divide-y divide-gray-100 text-sm"></tbody>
@@ -362,53 +424,8 @@
                     </div>
                 </div>
 
-                <!-- Credit Payments Tab -->
-                <div id="tab-credit" class="tab-content hidden space-y-6">
-                    <div class="bg-white p-6 rounded-xl shadow-xs border border-gray-100 space-y-4">
-                        <h3 class="text-xl font-bold">Credit Payments & Payables</h3>
-                        <p class="text-sm text-gray-500 mb-4">Manage amounts owed based on Sale Order Cost Prices.</p>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div class="bg-green-50 border border-green-200 p-4 rounded-xl">
-                                <p class="text-xs font-bold text-green-600 uppercase tracking-wider mb-1">Paid Amounts (ပေးပြီး)</p>
-                                <h3 id="credit-total-paid" class="text-2xl font-black text-green-800">0 MMK</h3>
-                            </div>
-                            <div class="bg-red-50 border border-red-200 p-4 rounded-xl">
-                                <p class="text-xs font-bold text-red-600 uppercase tracking-wider mb-1">Unpaid Amounts (ပေးရန်ကျန်)</p>
-                                <h3 id="credit-total-unpaid" class="text-2xl font-black text-red-800">0 MMK</h3>
-                            </div>
-                        </div>
-
-                        <div class="flex gap-4 mb-4">
-                            <select id="credit-filter-status" onchange="renderCreditTable()" class="w-full md:w-auto p-2 border border-gray-300 rounded-lg text-sm">
-                                <option value="">All Status</option>
-                                <option value="Unpaid">Unpaid</option>
-                                <option value="Paid">Paid</option>
-                            </select>
-                        </div>
-
-                        <div class="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden w-full overflow-x-auto">
-                            <table class="w-full text-left border-collapse whitespace-nowrap">
-                                <thead>
-                                    <tr class="bg-gray-50 border-b border-gray-200 text-gray-600 text-sm font-semibold">
-                                        <th class="p-3">SO ID</th>
-                                        <th class="p-3">Date</th>
-                                        <th class="p-3">Customer</th>
-                                        <th class="p-3 text-right">Total Sale</th>
-                                        <th class="p-3 text-right text-orange-600">Credit Owed (Cost)</th>
-                                        <th class="p-3 text-center">Status</th>
-                                        <th class="p-3 text-right">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="credit-table-body" class="divide-y divide-gray-100 text-sm"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Settings Tab -->
                 <div id="tab-settings" class="tab-content hidden space-y-6">
-                    <div class="bg-white p-6 rounded-xl shadow-xs border border-gray-100 space-y-4">
+                    <div class="bg-white p-4 md:p-6 rounded-xl shadow-xs border border-gray-100 space-y-4">
                         <h3 class="text-lg font-bold border-b pb-2">Invoice & Global Settings</h3>
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
@@ -430,48 +447,47 @@
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div><label class="block text-xs font-semibold text-gray-600 mb-1">Brand Name</label><input type="text" id="set-logo" class="w-full p-2 border border-gray-300 rounded-lg text-sm"></div>
-                            <div><label class="block text-xs font-semibold text-gray-600 mb-1">Address</label><input type="text" id="set-address" class="w-full p-2 border border-gray-300 rounded-lg text-sm"></div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                            <div><label class="block text-xs font-semibold text-gray-600 mb-1">Brand Name / Logo Text</label><input type="text" id="set-logo" class="w-full p-2 border border-gray-300 rounded-lg text-sm"></div>
+                            <div><label class="block text-xs font-semibold text-gray-600 mb-1">Our Address</label><input type="text" id="set-address" class="w-full p-2 border border-gray-300 rounded-lg text-sm"></div>
                             <div><label class="block text-xs font-semibold text-gray-600 mb-1">Phone No</label><input type="text" id="set-phone" class="w-full p-2 border border-gray-300 rounded-lg text-sm"></div>
                             <div><label class="block text-xs font-semibold text-gray-600 mb-1">Website</label><input type="text" id="set-web" class="w-full p-2 border border-gray-300 rounded-lg text-sm"></div>
                             <div><label class="block text-xs font-semibold text-gray-600 mb-1">Email</label><input type="email" id="set-email" class="w-full p-2 border border-gray-300 rounded-lg text-sm"></div>
-                            <div><label class="block text-xs font-semibold text-gray-600 mb-1">Auth Name</label><input type="text" id="set-auth-name" class="w-full p-2 border border-gray-300 rounded-lg text-sm"></div>
+                            <div><label class="block text-xs font-semibold text-gray-600 mb-1">Authorized Signatory Name</label><input type="text" id="set-auth-name" class="w-full p-2 border border-gray-300 rounded-lg text-sm"></div>
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-gray-600 mb-1">Payment Info</label>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Available Payment Info</label>
                             <textarea id="set-payment-info" rows="2" class="w-full p-2 border border-gray-300 rounded-lg text-sm"></textarea>
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-gray-600 mb-1">Terms and Conditions</label>
                             <textarea id="set-terms" rows="2" class="w-full p-2 border border-gray-300 rounded-lg text-sm"></textarea>
                         </div>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-                            <div><label class="block text-xs font-semibold text-gray-600 mb-1">Payment Methods (CSV)</label><input type="text" id="set-arr-payment" class="w-full p-2 border border-gray-300 rounded-lg text-sm"></div>
-                            <div><label class="block text-xs font-semibold text-gray-600 mb-1">Delivery Methods (CSV)</label><input type="text" id="set-arr-delivery" class="w-full p-2 border border-gray-300 rounded-lg text-sm"></div>
-                            <div><label class="block text-xs font-semibold text-gray-600 mb-1">Delivery Status (CSV)</label><input type="text" id="set-arr-status" class="w-full p-2 border border-gray-300 rounded-lg text-sm"></div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                            <div><label class="block text-xs font-semibold text-gray-600 mb-1">Payment Methods (Comma Separated)</label><input type="text" id="set-arr-payment" class="w-full p-2 border border-gray-300 rounded-lg text-sm"></div>
+                            <div><label class="block text-xs font-semibold text-gray-600 mb-1">Delivery Methods (Comma Separated)</label><input type="text" id="set-arr-delivery" class="w-full p-2 border border-gray-300 rounded-lg text-sm"></div>
+                            <div><label class="block text-xs font-semibold text-gray-600 mb-1">Delivery Status Options</label><input type="text" id="set-arr-status" class="w-full p-2 border border-gray-300 rounded-lg text-sm"></div>
                         </div>
-                        <button onclick="saveSettings()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700">Save Configuration</button>
+                        <button onclick="saveSettings()" class="w-full md:w-auto bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700">Save Configuration</button>
                     </div>
                 </div>
             </main>
         </div>
     </div>
 
-    <!-- Modals -->
     <!-- Zoom Card Modal -->
-    <div id="zoom-card-modal" class="fixed inset-0 bg-slate-900/80 z-50 hidden flex items-center justify-center p-4 no-print">
-        <div class="bg-white rounded-2xl max-w-2xl w-full p-8 space-y-6 shadow-2xl border-t-8 border-blue-600">
+    <div id="zoom-card-modal" class="fixed inset-0 bg-slate-900/80 z-[100] hidden flex items-center justify-center p-4 no-print">
+        <div class="bg-white rounded-2xl max-w-2xl w-full p-6 md:p-8 space-y-6 shadow-2xl border-t-8 border-blue-600 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b pb-4">
                 <div>
                     <span id="zoom-card-id" class="text-sm font-mono font-bold text-gray-400"></span>
-                    <h3 id="zoom-card-name" class="text-2xl font-black text-gray-900 mt-1"></h3>
+                    <h3 id="zoom-card-name" class="text-xl md:text-2xl font-black text-gray-900 mt-1"></h3>
                 </div>
-                <button onclick="closeZoomModal()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-full w-10 h-10 flex items-center justify-center text-xl">&times;</button>
+                <button onclick="document.getElementById('zoom-card-modal').classList.add('hidden')" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-full w-10 h-10 flex items-center justify-center text-xl">&times;</button>
             </div>
             <div class="text-sm space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-100 text-gray-800">
-                <p class="text-base"><strong>Phone:</strong> <span id="zoom-card-phone" class="font-bold text-blue-700"></span></p>
-                <p class="text-base"><strong>Address:</strong> <span id="zoom-card-address"></span></p>
+                <p><strong>Phone:</strong> <span id="zoom-card-phone" class="font-bold text-blue-700"></span></p>
+                <p><strong>Address:</strong> <span id="zoom-card-address"></span></p>
                 <p><strong>Delivery Method:</strong> <span id="zoom-card-delivery" class="bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded font-bold"></span></p>
             </div>
             <div>
@@ -489,21 +505,21 @@
                 </div>
             </div>
             <div class="flex justify-end pt-2">
-                <button onclick="closeZoomModal()" class="w-full bg-slate-900 hover:bg-slate-800 text-white py-3 rounded-xl font-bold">Close Workspace View</button>
+                <button onclick="document.getElementById('zoom-card-modal').classList.add('hidden')" class="w-full bg-slate-900 hover:bg-slate-800 text-white py-3 rounded-xl font-bold">Close Workspace View</button>
             </div>
         </div>
     </div>
 
-    <!-- Sale Order Modal -->
-    <div id="so-modal" class="fixed inset-0 bg-black/50 z-40 hidden flex items-center justify-center p-4 overflow-y-auto no-print">
-        <div class="bg-white rounded-xl max-w-4xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+    <!-- Sale Order Form Modal -->
+    <div id="so-modal" class="fixed inset-0 bg-black/50 z-[100] hidden flex items-center justify-center p-4 overflow-y-auto no-print">
+        <div class="bg-white rounded-xl max-w-4xl w-full p-4 md:p-6 space-y-4 max-h-[95vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b pb-2">
                 <h3 id="modal-title" class="text-xl font-bold">New Sale Order</h3>
-                <button onclick="closeOrderModal()" class="text-gray-500 text-xl font-bold">&times;</button>
+                <button onclick="closeOrderModal()" class="text-gray-500 text-2xl font-bold">&times;</button>
             </div>
             <form id="so-form" onsubmit="processSaleOrder(event)" class="space-y-4">
                 <input type="hidden" id="edit-so-id">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1">Customer</label>
                         <select id="so-cust-select" required class="w-full p-2 border border-gray-300 rounded-lg text-sm"></select>
@@ -517,254 +533,155 @@
                         <input type="date" id="so-date" required class="w-full p-2 border border-gray-300 rounded-lg text-sm">
                     </div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Payment Method</label>
-                        <select id="so-pay-method" class="w-full p-2 border border-gray-300 rounded-lg text-sm"></select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Payment Status</label>
-                        <select id="so-pay-status" class="w-full p-2 border border-gray-300 rounded-lg text-sm">
-                            <option value="Pending">Pending</option>
-                            <option value="Done">Done</option>
-                            <option value="Refunded">Refunded</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Delivery Method</label>
-                        <select id="so-del-method" onchange="toggleTrackingField(this.value)" class="w-full p-2 border border-gray-300 rounded-lg text-sm"></select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Delivery Status</label>
-                        <select id="so-del-status" class="w-full p-2 border border-gray-300 rounded-lg text-sm"></select>
-                    </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                    <div><label class="block text-xs font-semibold text-gray-600 mb-1">Payment Method</label><select id="so-pay-method" class="w-full p-2 border border-gray-300 rounded-lg text-sm"></select></div>
+                    <div><label class="block text-xs font-semibold text-gray-600 mb-1">Payment Status</label><select id="so-pay-status" class="w-full p-2 border border-gray-300 rounded-lg text-sm"><option value="Pending">Pending</option><option value="Done">Done</option><option value="Refunded">Refunded</option></select></div>
+                    <div><label class="block text-xs font-semibold text-gray-600 mb-1">Delivery Method</label><select id="so-del-method" onchange="toggleTrackingField(this.value)" class="w-full p-2 border border-gray-300 rounded-lg text-sm"></select></div>
+                    <div><label class="block text-xs font-semibold text-gray-600 mb-1">Delivery Status</label><select id="so-del-status" class="w-full p-2 border border-gray-300 rounded-lg text-sm"></select></div>
                 </div>
                 <div id="tracking-container" class="hidden">
                     <label class="block text-xs font-semibold text-gray-600 mb-1">Tracking URL</label>
                     <input type="url" id="so-tracking-link" placeholder="https://tracking.com/..." class="w-full p-2 border border-gray-300 rounded-lg text-sm">
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-2 bg-slate-50 p-3 rounded-lg">
-                    <div>
-                        <label class="block text-xs font-bold text-blue-800 mb-1">Customized Instruction (For Production)</label>
-                        <textarea id="so-custom-instruction" rows="2" class="w-full p-2 border border-gray-300 rounded-lg text-sm bg-white shadow-xs"></textarea>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Other Instruction (For Team/Delivery)</label>
-                        <textarea id="so-other-instruction" rows="2" class="w-full p-2 border border-gray-300 rounded-lg text-sm bg-white shadow-xs"></textarea>
-                    </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t pt-2 bg-slate-50 p-3 rounded-lg">
+                    <div><label class="block text-xs font-bold text-blue-800 mb-1">Customized Instruction (For Production)</label><textarea id="so-custom-instruction" rows="2" class="w-full p-2 border border-gray-300 rounded-lg text-sm bg-white"></textarea></div>
+                    <div><label class="block text-xs font-bold text-slate-700 mb-1">Other Instruction (For Team/Delivery)</label><textarea id="so-other-instruction" rows="2" class="w-full p-2 border border-gray-300 rounded-lg text-sm bg-white"></textarea></div>
                 </div>
                 <div class="border-t pt-2">
                     <p class="text-xs font-bold text-gray-700 mb-2">Order Items & Pricing</p>
                     <input type="hidden" id="edit-item-index" value="">
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-2 mb-2">
-                        <input type="text" id="item-desc" placeholder="Item Description" class="p-2 border border-gray-300 rounded-lg text-sm md:col-span-1">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
+                        <input type="text" id="item-desc" placeholder="Desc" class="p-2 border border-gray-300 rounded-lg text-sm col-span-2 md:col-span-1">
                         <input type="number" id="item-qty" placeholder="Qty" class="p-2 border border-gray-300 rounded-lg text-sm">
-                        <input type="number" id="item-cost" placeholder="Actual Cost (Credit Base)" class="p-2 border border-gray-300 rounded-lg text-sm">
+                        <input type="number" id="item-cost" placeholder="Cost" class="p-2 border border-gray-300 rounded-lg text-sm">
                         <input type="number" id="item-rate" placeholder="Sale Price" class="p-2 border border-gray-300 rounded-lg text-sm">
                     </div>
                     <button type="button" id="btn-add-item" onclick="addItemToGrid()" class="w-full md:w-auto bg-slate-900 text-white text-xs px-4 py-2 rounded font-medium hover:bg-slate-800">+ Add / Update Item</button>
-                    <div class="mt-3 border rounded-lg overflow-hidden w-full overflow-x-auto">
-                        <table class="w-full text-left text-xs whitespace-nowrap">
-                            <thead class="bg-gray-100 border-b">
-                                <tr>
-                                    <th class="p-2">Description</th>
-                                    <th class="p-2 text-center">Qty</th>
-                                    <th class="p-2 text-right">Cost Price</th>
-                                    <th class="p-2 text-right">Sale Price</th>
-                                    <th class="p-2 text-right">Total Sale</th>
-                                    <th class="p-2 text-center">Actions</th>
-                                </tr>
-                            </thead>
+                    <div class="mt-3 border rounded-lg overflow-hidden table-container">
+                        <table class="w-full text-left text-xs min-w-[500px]">
+                            <thead class="bg-gray-100 border-b"><tr><th class="p-2">Description</th><th class="p-2 text-center">Qty</th><th class="p-2 text-right">Cost Price</th><th class="p-2 text-right">Sale Price</th><th class="p-2 text-right">Total Sale</th><th class="p-2 text-center">Actions</th></tr></thead>
                             <tbody id="modal-items-tbody" class="divide-y divide-gray-200"></tbody>
                         </table>
                     </div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 border-t pt-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Discount Type</label>
-                        <select id="so-disc-type" class="w-full p-2 border border-gray-300 rounded-lg text-sm">
-                            <option value="none">No Discount</option>
-                            <option value="fix">Fixed Amount</option>
-                            <option value="percent">Percentage (%)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Discount Value</label>
-                        <input type="number" id="so-disc-val" value="0" class="w-full p-2 border border-gray-300 rounded-lg text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Tax Option (%)</label>
-                        <input type="number" id="so-tax" value="0" class="w-full p-2 border border-gray-300 rounded-lg text-sm">
-                    </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 border-t pt-3">
+                    <div><label class="block text-xs font-semibold text-gray-600 mb-1">Discount Type</label><select id="so-disc-type" class="w-full p-2 border border-gray-300 rounded-lg text-sm"><option value="none">No Discount</option><option value="fix">Fixed Amount</option><option value="percent">Percentage (%)</option></select></div>
+                    <div><label class="block text-xs font-semibold text-gray-600 mb-1">Discount Value</label><input type="number" id="so-disc-val" value="0" class="w-full p-2 border border-gray-300 rounded-lg text-sm"></div>
+                    <div><label class="block text-xs font-semibold text-gray-600 mb-1">Tax Option (%)</label><input type="number" id="so-tax" value="0" class="w-full p-2 border border-gray-300 rounded-lg text-sm"></div>
                 </div>
                 <div class="flex justify-end gap-2 border-t pt-3">
-                    <button type="button" onclick="closeOrderModal()" class="px-4 py-2 border rounded-lg text-sm text-gray-600">Cancel</button>
-                    <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold">Save Order</button>
+                    <button type="button" onclick="closeOrderModal()" class="px-4 py-2 border rounded-lg text-sm text-gray-600 w-full sm:w-auto">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold w-full sm:w-auto">Save Order</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Quick Payment Update Modal -->
-    <div id="quick-payment-modal" class="fixed inset-0 bg-black/50 z-[60] hidden flex items-center justify-center p-4 no-print">
-        <div class="bg-white rounded-xl max-w-sm w-full p-6 space-y-4">
-            <h3 class="text-lg font-bold border-b pb-2">Update Payment Status</h3>
-            <input type="hidden" id="quick-so-id">
-            <div>
-                <label class="block text-sm font-semibold text-gray-600 mb-2">Select New Status:</label>
-                <select id="quick-so-status" class="w-full p-2 border border-gray-300 rounded-lg text-sm">
-                    <option value="Pending">Pending</option>
-                    <option value="Done">Done</option>
-                    <option value="Refunded">Refunded</option>
-                </select>
+    <!-- Invoice Modal -->
+    <div id="invoice-modal" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-2 md:p-4 overflow-y-auto">
+        <div class="bg-white max-w-4xl w-full p-4 md:p-8 space-y-6 rounded-lg shadow-2xl relative my-8">
+            <div id="invoice-stamp-layer" class="invoice-stamp hidden">Paid</div>
+            <div class="flex flex-col sm:flex-row justify-between items-center no-print border-b pb-4 gap-4">
+                <div class="flex gap-2 w-full sm:w-auto">
+                    <button onclick="window.print()" class="flex-1 sm:flex-none bg-blue-600 text-white px-5 py-2.5 rounded-lg text-xs font-bold shadow-md hover:bg-blue-700 transition">Print / PDF</button>
+                    <button id="refund-btn" onclick="triggerRefund()" class="flex-1 sm:flex-none bg-red-500 text-white px-4 py-2 rounded text-xs font-bold hidden">Process Refund</button>
+                </div>
+                <button onclick="document.getElementById('invoice-modal').classList.add('hidden')" class="text-gray-500 text-3xl font-bold absolute top-2 right-4">&times;</button>
             </div>
-            <div class="flex justify-end gap-2 pt-2">
-                <button onclick="document.getElementById('quick-payment-modal').classList.add('hidden')" class="px-4 py-2 border rounded-lg text-sm">Cancel</button>
-                <button onclick="saveQuickPayment()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold">Update</button>
+            <div id="invoice-print-area" class="bg-white text-black font-sans text-sm">
+                <!-- Keep original invoice format, just ensure widths -->
+                <div class="grid grid-cols-2 gap-4 border-b pb-4 mb-4 items-start">
+                    <div class="flex items-start gap-4">
+                        <img id="inv-logo-img" src="" class="w-16 h-16 object-contain bg-white p-1 hidden" alt="Logo">
+                        <div>
+                            <h1 id="inv-header-logo" class="text-xl md:text-2xl font-black uppercase tracking-tight text-gray-900">LOGO</h1>
+                            <div class="mt-2 space-y-0.5 text-gray-600 font-medium text-[10px] md:text-[11px]" id="inv-header-contacts-box">
+                                 <div id="inv-line-address"></div><div id="inv-line-phone"></div><div id="inv-line-web"></div><div id="inv-line-email"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-right space-y-1 text-[11px] md:text-sm">
+                        <h2 class="text-base md:text-lg font-bold tracking-wide text-gray-800" id="inv-title-mode">SALE ORDER</h2>
+                        <p class="font-semibold">ID: <span id="inv-lbl-id" class="text-gray-900 font-bold"></span></p>
+                        <p>Order Date: <span id="inv-lbl-date"></span></p>
+                        <p class="font-medium text-blue-800">Delivery via: <span id="inv-lbl-delivery-method" class="font-bold"></span></p>
+                        <p class="text-gray-500 font-medium text-[9px] md:text-[10px]" id="inv-lbl-payment-time-block">Payment Time: <span id="inv-lbl-payment-time" class="font-semibold">N/A</span></p>
+                        <p class="font-medium">Customer: <span id="inv-lbl-custname" class="font-bold"></span></p>
+                    </div>
+                </div>
+                <table class="w-full text-left border-collapse border border-gray-300 mb-6 text-[10px] md:text-xs">
+                    <thead><tr class="bg-gray-100 border-b border-gray-300 text-gray-700 uppercase font-bold"><th class="p-2 border-r" style="width:8%;">No.</th><th class="p-2 border-r" style="width:50%;">Description</th><th class="p-2 border-r text-center" style="width:10%;">Qty</th><th class="p-2 border-r text-right" style="width:15%;">Rate</th><th class="p-2 text-right" style="width:17%;">Price</th></tr></thead>
+                    <tbody id="inv-items-body" class="divide-y divide-gray-200"></tbody>
+                </table>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start pt-2">
+                    <div class="space-y-4 text-[10px] md:text-xs order-2 md:order-1">
+                        <div><p class="font-bold border-b pb-1 mb-1 text-gray-800">Payment Info</p><p id="inv-lbl-availpay" class="text-gray-600 whitespace-pre-line"></p></div>
+                        <div><p class="font-bold border-b pb-1 mb-1 text-gray-800">Terms & Conditions</p><p id="inv-lbl-terms" class="text-gray-600 whitespace-pre-line"></p></div>
+                    </div>
+                    <div class="md:ml-auto w-full md:w-2/3 space-y-1.5 text-right font-medium text-gray-700 order-1 md:order-2 text-xs md:text-sm">
+                        <div class="flex justify-between"><span>Sub Total:</span><span id="inv-calc-sub">0</span></div>
+                        <div class="flex justify-between text-red-600"><span>Discount:</span><span id="inv-calc-disc">0</span></div>
+                        <div class="flex justify-between"><span>Tax Basis:</span><span id="inv-calc-tax">0</span></div>
+                        <div class="flex justify-between border-t border-gray-400 pt-1.5 text-sm md:text-base font-black text-black"><span>Total Amount:</span><span id="inv-calc-total">0</span></div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4 mt-8 pt-6 border-t border-dashed border-gray-300">
+                    <div class="flex flex-col justify-end">
+                         <div class="flex flex-col sm:flex-row gap-4 sm:gap-6 items-start sm:items-center">
+                              <div><p class="text-[9px] md:text-[10px] font-bold text-gray-500 mb-1 uppercase tracking-wider">Verification Link</p><div id="qr-verify-target" class="p-1 border bg-white inline-block"></div></div>
+                              <div id="qr-tracking-block" class="hidden"><p class="text-[9px] md:text-[10px] font-bold text-gray-500 mb-1 uppercase tracking-wider" id="tracking-title-lbl">Tracking Link</p><div id="qr-tracking-target" class="p-1 border bg-white inline-block"></div></div>
+                         </div>
+                    </div>
+                    <div class="text-right space-y-1 flex flex-col items-end justify-end">
+                        <div class="w-32 md:w-48 border-b border-gray-400 min-h-[3rem] mb-1 flex items-center justify-center">
+                            <img id="inv-sign-img" src="" class="max-w-full max-h-12 object-contain hidden" alt="Signature">
+                        </div>
+                        <p class="font-bold text-gray-900 text-xs md:text-sm" id="inv-lbl-authname"></p>
+                        <p class="text-[9px] md:text-[10px] text-gray-500 uppercase font-semibold" id="inv-lbl-authrole"></p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Quick Delivery Update Modal -->
-    <div id="quick-delivery-modal" class="fixed inset-0 bg-black/50 z-[60] hidden flex items-center justify-center p-4 no-print">
-        <div class="bg-white rounded-xl max-w-sm w-full p-6 space-y-4">
-            <h3 class="text-lg font-bold border-b pb-2">Update Delivery Status</h3>
-            <input type="hidden" id="quick-del-so-id">
-            <div>
-                <label class="block text-sm font-semibold text-gray-600 mb-2">Select New Status:</label>
-                <select id="quick-del-status" class="w-full p-2 border border-gray-300 rounded-lg text-sm">
-                </select>
+    <!-- Customer Detail Modal -->
+    <div id="customer-detail-modal" class="fixed inset-0 bg-slate-900/80 z-[100] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl max-h-[90vh] flex flex-col relative">
+            <button onclick="document.getElementById('customer-detail-modal').classList.add('hidden')" class="absolute top-4 right-4 text-2xl text-gray-500 hover:text-black font-bold">&times;</button>
+            <h3 class="text-2xl font-black text-gray-800 border-b pb-2">Customer Profile</h3>
+            <div class="grid grid-cols-2 gap-4 bg-blue-50 p-4 rounded-xl border border-blue-100 text-sm">
+                <div><p class="text-xs text-blue-500 font-bold uppercase">Name</p><p id="cd-name" class="font-bold text-gray-800 text-lg"></p></div>
+                <div><p class="text-xs text-blue-500 font-bold uppercase">Phone</p><p id="cd-phone" class="font-bold text-gray-800 text-lg"></p></div>
+                <div class="col-span-2"><p class="text-xs text-blue-500 font-bold uppercase">Address</p><p id="cd-address" class="font-medium text-gray-700"></p></div>
+                <div class="col-span-2"><p class="text-xs text-blue-500 font-bold uppercase">Social Link</p><a id="cd-social" href="#" target="_blank" class="text-blue-600 underline font-medium"></a></div>
             </div>
-            <div class="flex justify-end gap-2 pt-2">
-                <button onclick="document.getElementById('quick-delivery-modal').classList.add('hidden')" class="px-4 py-2 border rounded-lg text-sm">Cancel</button>
-                <button onclick="saveQuickDelivery()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold">Update</button>
+            <h4 class="font-bold text-gray-700 pt-2">Order History</h4>
+            <div class="overflow-y-auto flex-1 border rounded-lg">
+                <table class="w-full text-left text-xs border-collapse">
+                    <thead class="bg-gray-100 sticky top-0"><tr><th class="p-2">ID</th><th class="p-2">Date</th><th class="p-2">Amount</th><th class="p-2">Status</th></tr></thead>
+                    <tbody id="cd-history-body" class="divide-y divide-gray-200"></tbody>
+                </table>
             </div>
         </div>
     </div>
 
     <!-- Expense Breakdown Modal -->
-    <div id="expense-breakdown-modal" class="fixed inset-0 bg-black/50 z-[60] hidden flex items-center justify-center p-4 no-print">
-        <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4">
-            <div class="flex justify-between items-center border-b pb-2">
-                <h3 class="text-lg font-bold">Total Expenses Breakdown</h3>
-                <button onclick="document.getElementById('expense-breakdown-modal').classList.add('hidden')" class="text-gray-500 text-xl font-bold">&times;</button>
-            </div>
-            <div id="expense-breakdown-content" class="space-y-3">
-                <!-- Populated dynamically -->
-            </div>
-            <div class="flex justify-end pt-2">
-                <button onclick="document.getElementById('expense-breakdown-modal').classList.add('hidden')" class="w-full bg-slate-900 text-white py-2 rounded-lg text-sm font-bold">Close Details</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Customer Details Modal -->
-    <div id="customer-detail-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4 overflow-y-auto no-print">
-        <div class="bg-white rounded-xl max-w-3xl w-full p-6 space-y-4">
-            <div class="flex justify-between items-center border-b pb-2">
-                <h3 class="text-xl font-bold">Customer Details</h3>
-                <button onclick="document.getElementById('customer-detail-modal').classList.add('hidden')" class="text-gray-500 text-xl font-bold">&times;</button>
-            </div>
-            <div class="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
-                <div><span class="text-xs text-gray-500 block">Name</span><span id="cd-name" class="font-bold"></span></div>
-                <div><span class="text-xs text-gray-500 block">Phone</span><span id="cd-phone" class="font-bold"></span></div>
-                <div><span class="text-xs text-gray-500 block">Address</span><span id="cd-address" class="font-semibold"></span></div>
-                <div><span class="text-xs text-gray-500 block">Social</span><a id="cd-social" href="#" target="_blank" class="text-blue-600 underline">Link</a></div>
-            </div>
-            <div>
-                <h4 class="font-bold text-gray-700 mb-2">Order History</h4>
-                <div class="max-h-60 overflow-y-auto border rounded-lg">
-                    <table class="w-full text-left text-sm">
-                        <thead class="bg-gray-100 border-b sticky top-0">
-                            <tr>
-                                <th class="p-2">SO ID</th>
-                                <th class="p-2">Date</th>
-                                <th class="p-2">Total Amount</th>
-                                <th class="p-2">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="cd-history-body" class="divide-y divide-gray-100"></tbody>
-                    </table>
+    <div id="expense-breakdown-modal" class="fixed inset-0 bg-slate-900/80 z-[100] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl relative">
+            <button onclick="document.getElementById('expense-breakdown-modal').classList.add('hidden')" class="absolute top-4 right-4 text-2xl text-gray-500 hover:text-black font-bold">&times;</button>
+            <h3 class="text-xl font-black text-red-600 border-b pb-2 flex items-center gap-2">Total Expenses Breakdown</h3>
+            <div class="space-y-3 pt-2">
+                <div class="flex justify-between items-center bg-amber-50 p-3 rounded-lg border border-amber-100">
+                    <span class="font-semibold text-amber-800">Total Cost of Goods (COGS)</span>
+                    <span id="eb-cogs" class="font-bold text-lg text-amber-700">0 MMK</span>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Invoice Print Modal -->
-    <div id="invoice-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
-        <div class="bg-white max-w-4xl w-full p-8 space-y-6 rounded-lg shadow-2xl relative">
-            <div id="invoice-stamp-layer" class="invoice-stamp hidden">Paid</div>
-            <div class="flex justify-between items-center no-print border-b pb-4">
-                <div class="flex gap-2">
-                    <button onclick="window.print()" class="bg-blue-600 text-white px-5 py-2.5 rounded-lg text-xs font-bold shadow-md hover:bg-blue-700 transition">Print / Export PDF</button>
-                    <button id="refund-btn" onclick="triggerRefund()" class="bg-red-500 text-white px-4 py-2 rounded text-xs font-bold hidden">Process Refund</button>
+                <div class="border-t border-dashed pt-3">
+                    <p class="text-xs text-gray-500 font-bold uppercase mb-2">Operational Expenses</p>
+                    <ul id="eb-list" class="space-y-2 text-sm"></ul>
                 </div>
-                <button onclick="closeInvoiceModal()" class="text-gray-500 text-2xl font-bold">&times;</button>
-            </div>
-
-            <!-- Invoice Area -->
-            <div id="invoice-print-area" class="p-4 bg-white text-black font-sans text-sm">
-                <!-- Keep existing invoice template here -->
-                <div class="grid grid-cols-2 gap-4 border-b pb-4 mb-4 items-start">
-                    <div class="flex items-start gap-4">
-                        <img id="inv-logo-img" src="" class="w-16 h-16 object-contain bg-white p-1 hidden" alt="Logo">
-                        <div>
-                            <h1 id="inv-header-logo" class="text-2xl font-black uppercase tracking-tight text-gray-900">LOGO</h1>
-                            <div class="mt-2 space-y-0.5 text-gray-600 font-medium text-[11px]" id="inv-header-contacts-box">
-                                 <div id="inv-line-address"></div><div id="inv-line-phone"></div>
-                                 <div id="inv-line-web"></div><div id="inv-line-email"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="text-right space-y-1">
-                        <h2 class="text-lg font-bold tracking-wide text-gray-800" id="inv-title-mode">SALE ORDER</h2>
-                        <p class="font-semibold">ID: <span id="inv-lbl-id" class="text-gray-900 font-bold"></span></p>
-                        <p>Order Date: <span id="inv-lbl-date"></span></p>
-                        <p class="font-medium text-blue-800">Delivery via: <span id="inv-lbl-delivery-method" class="font-bold"></span></p>
-                        <p class="text-gray-500 font-medium text-[10px]" id="inv-lbl-payment-time-block">Payment Time: <span id="inv-lbl-payment-time" class="font-semibold">N/A</span></p>
-                        <p class="font-medium">Customer: <span id="inv-lbl-custname" class="font-bold"></span></p>
-                    </div>
-                </div>
-                <table class="w-full text-left border-collapse border border-gray-300 mb-6">
-                    <thead>
-                        <tr class="bg-gray-100 border-b border-gray-300 text-gray-700 uppercase font-bold text-[10px]">
-                            <th class="p-2 border-r border-gray-300" style="width: 8%;">No.</th>
-                            <th class="p-2 border-r border-gray-300" style="width: 55%;">Description</th>
-                            <th class="p-2 border-r border-gray-300 text-center" style="width: 15%;">Qty</th>
-                            <th class="p-2 border-r border-gray-300 text-right" style="width: 20%;">Rate</th>
-                            <th class="p-2 text-right" style="width: 22%;">Price</th>
-                        </tr>
-                    </thead>
-                    <tbody id="inv-items-body" class="divide-y divide-gray-200"></tbody>
-                </table>
-                <div class="grid grid-cols-2 gap-4 items-start pt-2">
-                    <div class="space-y-4">
-                        <div><p class="font-bold border-b pb-1 mb-1 text-gray-800">Payment Information</p><p id="inv-lbl-availpay" class="text-gray-600 whitespace-pre-line"></p></div>
-                        <div><p class="font-bold border-b pb-1 mb-1 text-gray-800">Terms & Conditions</p><p id="inv-lbl-terms" class="text-gray-600 whitespace-pre-line"></p></div>
-                    </div>
-                    <div class="ml-auto w-2/3 space-y-1.5 text-right font-medium text-gray-700">
-                        <div class="flex justify-between"><span>Sub Total:</span><span id="inv-calc-sub">0</span></div>
-                        <div class="flex justify-between text-red-600"><span>Discount:</span><span id="inv-calc-disc">0</span></div>
-                        <div class="flex justify-between"><span>Tax Basis:</span><span id="inv-calc-tax">0</span></div>
-                        <div class="flex justify-between border-t border-gray-400 pt-1.5 text-sm font-black text-black">
-                            <span>Total Amount:</span><span id="inv-calc-total">0</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4 mt-8 pt-6 border-t border-dashed border-gray-300">
-                    <div class="flex flex-col justify-end">
-                         <div class="flex gap-6 items-center">
-                              <div><p class="text-[10px] font-bold text-gray-500 mb-1 uppercase tracking-wider">Verification Link</p><div id="qr-verify-target" class="p-1 border bg-white inline-block"></div></div>
-                              <div id="qr-tracking-block" class="hidden"><p class="text-[10px] font-bold text-gray-500 mb-1 uppercase tracking-wider" id="tracking-title-lbl">Tracking Link</p><div id="qr-tracking-target" class="p-1 border bg-white inline-block"></div></div>
-                         </div>
-                    </div>
-                    <div class="text-right space-y-1 flex flex-col items-end justify-end">
-                        <div class="w-48 border-b border-gray-400 min-h-12 mb-1 flex items-center justify-center">
-                            <img id="inv-sign-img" src="" class="max-w-full max-h-12 object-contain hidden" alt="Signature">
-                        </div>
-                        <p class="font-bold text-gray-900" id="inv-lbl-authname"></p>
-                        <p class="text-[10px] text-gray-500 uppercase font-semibold" id="inv-lbl-authrole"></p>
-                    </div>
+                <div class="flex justify-between items-center bg-red-50 p-4 rounded-lg border border-red-200 mt-4">
+                    <span class="font-black text-red-800">Grand Total Expenses</span>
+                    <span id="eb-total" class="font-black text-xl text-red-600">0 MMK</span>
                 </div>
             </div>
         </div>
@@ -772,7 +689,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, set, onValue, get, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -788,580 +705,489 @@
         const db = getDatabase(app);
         const auth = getAuth(app);
 
+        // Globals
         window.salesOrders = [];
         window.expenses = [];
         window.customers = [];
         window.globalItemsAccumulator = [];
         window.appSettings = {};
+        
+        // Sorting States
+        window.sortState = {
+            dashboard: { col: 'date', asc: false },
+            expenses: { col: 'datetime', asc: false }
+        };
 
-        // Login Logic
-        const loginForm = document.getElementById('firebase-login-form');
-        if(loginForm) {
-            loginForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const email = document.getElementById('auth-email-input').value;
-                const password = document.getElementById('auth-password-input').value;
-                const errorMsg = document.getElementById('auth-error-msg');
-                signInWithEmailAndPassword(auth, email, password)
-                    .then(() => { errorMsg.classList.add('hidden'); loginForm.reset(); })
-                    .catch((error) => { console.error(error); errorMsg.classList.remove('hidden'); });
-            });
-        }
+        // --- PUBLIC VERIFICATION LOGIC (Intercepts QR) ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const verifyId = urlParams.get("verify");
 
-        const logoutBtn = document.getElementById('system-logout-btn');
-        if(logoutBtn) {
-            logoutBtn.addEventListener('click', () => {
-                if(confirm("စနစ်ထဲမှ လုံခြုံစွာ ထွက်ခွာမှာ သေချာပါသလား?")) {
-                    signOut(auth).then(() => { location.reload(); });
+        if (verifyId) {
+            document.getElementById('auth-lock-screen').classList.add('hidden');
+            document.getElementById('app-workspace-root').classList.add('hidden');
+            document.getElementById('public-verify-screen').classList.remove('hidden');
+
+            const dbRef = ref(db, 'business_data/salesOrders');
+            const q = query(dbRef, orderByChild('id'), equalTo(Number(verifyId)));
+
+            get(ref(db, 'business_data/appSettings')).then(settingsSnap => {
+                if(settingsSnap.exists()) {
+                    document.getElementById('v-brand-name').innerText = settingsSnap.val().logo || "NIMBA SYSTEM";
                 }
             });
-        }
 
-        // State Listener
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                document.getElementById('auth-lock-screen').classList.add('hidden');
-                document.getElementById('app-workspace-root').classList.remove('hidden');
-                
-                onValue(ref(db, 'business_data'), (snapshot) => {
-                    const data = snapshot.val() || {};
-                    window.salesOrders = data.salesOrders || [];
-                    window.expenses = data.expenses || [];
-                    window.customers = data.customers || [];
-                    window.appSettings = data.appSettings || {
-                        logo: "Nimba System", address: "Yangon", phone: "09123456789", web: "", email: "", authName: "Director", authRole: "Authorized", payInfo: "KBZ Pay", terms: "", arrPayment: "KBZPay,Cash", arrDelivery: "Royal Express,Self Pick", arrStatus: "Pending,Dispatched,Delivered", logoImg: "", signImg: ""
-                    };
+            get(q).then((snapshot) => {
+                const icon = document.getElementById('verify-status-icon');
+                const title = document.getElementById('verify-status-title');
+                const desc = document.getElementById('verify-status-desc');
 
-                    document.getElementById('sync-badge').className = "bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full font-semibold";
-                    document.getElementById('sync-badge').innerText = "Cloud Sync Active";
+                if (snapshot.exists()) {
+                    let orders = snapshot.val();
+                    let order = Object.values(orders)[0]; 
+
+                    icon.innerHTML = `<svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>`;
+                    title.innerText = "Authentic Invoice";
+                    title.className = "text-2xl font-black tracking-wide text-green-500";
+                    desc.innerText = "This invoice is verified and recorded in the database.";
+                    document.querySelector('#public-verify-screen .bg-blue-600').classList.replace('bg-blue-600', 'bg-green-100');
+
+                    document.getElementById('v-id').innerText = `#${order.id}`;
+                    document.getElementById('v-date').innerText = order.date;
+                    document.getElementById('v-customer').innerText = order.customerName || "Walk-in Customer";
+                    document.getElementById('v-total').innerText = `${Number(order.totalAmount).toLocaleString()} MMK`;
                     
-                    initSettingsFormFields(); updateAppImages(); populateDropdownSelects();
-                    renderDashboard(); renderSalesTable(); renderExpensesTable(); renderCustomersTable(); renderInternalCards(); renderCreditTable();
-                });
-            } else {
-                document.getElementById('app-workspace-root').classList.add('hidden');
-                document.getElementById('auth-lock-screen').classList.remove('hidden');
-            }
-        });
+                    let pStatus = document.getElementById('v-pay-status');
+                    pStatus.innerText = order.payStatus;
+                    pStatus.className = order.payStatus === 'Done' ? 'font-bold text-green-600' : (order.payStatus === 'Refunded' ? 'font-bold text-red-600' : 'font-bold text-amber-600');
+                    
+                    let dStatus = document.getElementById('v-del-status');
+                    dStatus.innerText = order.deliveryStatus || 'N/A';
+                    dStatus.className = 'font-bold text-gray-800';
 
-        window.syncToFirebaseCloud = function() {
-            set(ref(db, 'business_data'), {
-                salesOrders: window.salesOrders,
-                expenses: window.expenses,
-                customers: window.customers,
-                appSettings: window.appSettings
+                    let itemsBody = document.getElementById('v-items-body');
+                    (order.items || []).forEach(item => {
+                        itemsBody.innerHTML += `<tr><td class="p-2 font-medium">${item.desc}</td><td class="p-2 text-center font-bold text-gray-500">${item.qty}</td><td class="p-2 text-right font-semibold">${Number(item.total).toLocaleString()}</td></tr>`;
+                    });
+
+                    document.getElementById('verify-details-container').classList.remove('hidden');
+                } else {
+                    icon.innerHTML = `<svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>`;
+                    title.innerText = "Invalid Invoice";
+                    title.className = "text-2xl font-black tracking-wide text-red-600";
+                    desc.innerText = "Warning: This record does not exist in our system.";
+                    document.querySelector('#public-verify-screen .bg-blue-600').classList.replace('bg-blue-600', 'bg-red-100');
+                    document.getElementById('verify-error-container').classList.remove('hidden');
+                }
+            }).catch(error => {
+                console.error(error);
+                document.getElementById('verify-status-title').innerText = "Database Error";
+                document.getElementById('verify-error-container').classList.remove('hidden');
             });
-        };
+            
+        } else {
+            // --- NORMAL AUTH & WORKSPACE LOGIC ---
+            const loginForm = document.getElementById('firebase-login-form');
+            if(loginForm) {
+                loginForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const email = document.getElementById('auth-email-input').value;
+                    const password = document.getElementById('auth-password-input').value;
+                    const errorMsg = document.getElementById('auth-error-msg');
+
+                    signInWithEmailAndPassword(auth, email, password)
+                        .then(() => { errorMsg.classList.add('hidden'); loginForm.reset(); })
+                        .catch((error) => { console.error("Auth Error:", error.message); errorMsg.classList.remove('hidden'); });
+                });
+            }
+
+            const logoutBtn = document.getElementById('system-logout-btn');
+            if(logoutBtn) {
+                logoutBtn.addEventListener('click', () => {
+                    if(confirm("စနစ်ထဲမှ လုံခြုံစွာ ထွက်ခွာမှာ သေချာပါသလား?")) {
+                        signOut(auth).then(() => { location.reload(); });
+                    }
+                });
+            }
+
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    document.getElementById('auth-lock-screen').classList.add('hidden');
+                    document.getElementById('app-workspace-root').classList.remove('hidden');
+                    
+                    onValue(ref(db, 'business_data'), (snapshot) => {
+                        const data = snapshot.val() || {};
+                        window.salesOrders = data.salesOrders || [];
+                        window.expenses = data.expenses || [];
+                        window.customers = data.customers || [];
+                        window.appSettings = data.appSettings || {
+                            logo: "Nimba System", address: "No. 123", phone: "+959 123 456", web: "https://", email: "info@",
+                            authName: "Admin", authRole: "Officer", payInfo: "KBZ Pay", terms: "1. No return",
+                            arrPayment: "KBZPay, CBPay, Cash", arrDelivery: "Express, Pick up", arrStatus: "Pending, Dispatched, Delivered",
+                            logoImg: "", signImg: ""
+                        };
+
+                        document.getElementById('sync-badge').className = "bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full font-semibold whitespace-nowrap";
+                        document.getElementById('sync-badge').innerText = "Cloud Sync Active";
+                        
+                        initSettingsFormFields();
+                        updateAppImages();
+                        populateDashboardFilters();
+                        populateDropdownSelects();
+                        
+                        // Render UI
+                        renderDashboard();
+                        renderInternalCards();
+                        renderSalesTable();
+                        renderExpensesTable();
+                        renderCustomersTable();
+                        renderCreditPayments();
+                    });
+                } else {
+                    document.getElementById('app-workspace-root').classList.add('hidden');
+                    document.getElementById('auth-lock-screen').classList.remove('hidden');
+                }
+            });
+
+            window.syncToFirebaseCloud = function() {
+                set(ref(db, 'business_data'), {
+                    salesOrders: window.salesOrders,
+                    expenses: window.expenses,
+                    customers: window.customers,
+                    appSettings: window.appSettings
+                });
+            };
+        }
     </script>
 
     <script>
         let currentTab = 'dashboard';
-        
-        // Sorting States
-        let dashSort = { key: 'date', asc: false };
-        let expSort = { key: 'datetime', asc: false };
-
-        window.onload = function() { setDefaultExpenseDateTime(); };
 
         function toggleSidebar() {
-            const sidebar = document.getElementById('app-sidebar');
-            const backdrop = document.getElementById('mobile-sidebar-backdrop');
-            if(sidebar.classList.contains('-translate-x-full')) {
-                sidebar.classList.remove('-translate-x-full');
-                backdrop.classList.remove('hidden');
-            } else {
-                sidebar.classList.add('-translate-x-full');
-                backdrop.classList.add('hidden');
-            }
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+            document.getElementById('sidebar-overlay').classList.toggle('hidden');
         }
 
         function switchTab(tabId, element) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            const targetTab = document.getElementById(`tab-${tabId}`);
+            if(targetTab) targetTab.classList.remove('hidden');
             
             document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('bg-blue-600', 'font-medium'); btn.classList.add('hover:bg-slate-800');
+                btn.classList.remove('bg-blue-600', 'font-medium');
+                btn.classList.add('hover:bg-slate-800');
             });
+            
             if(element) {
-                element.classList.add('bg-blue-600', 'font-medium'); element.classList.remove('hover:bg-slate-800');
+                element.classList.add('bg-blue-600', 'font-medium');
+                element.classList.remove('hover:bg-slate-800');
             }
+            
             let displayTitle = tabId.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
             document.getElementById('page-title').innerText = displayTitle;
             currentTab = tabId;
 
-            // Close sidebar on mobile after navigating
-            if(window.innerWidth < 768) {
-                const sidebar = document.getElementById('app-sidebar');
-                if(!sidebar.classList.contains('-translate-x-full')) {
-                    toggleSidebar();
-                }
+            // Close sidebar on mobile after click
+            if (window.innerWidth < 768) {
+                document.getElementById('sidebar').classList.add('-translate-x-full');
+                document.getElementById('sidebar-overlay').classList.add('hidden');
             }
 
-            if(tabId === 'dashboard') renderDashboard();
-            if(tabId === 'internal-cards') renderInternalCards();
-            if(tabId === 'purchases') { resetExpenseFormState(); renderExpensesTable(); }
-            if(tabId === 'sales') renderSalesTable();
-            if(tabId === 'customers') renderCustomersTable();
-            if(tabId === 'credit') renderCreditTable();
+            if(tabId === 'dashboard') { renderDashboard(); }
+            if(tabId === 'internal-cards') { renderInternalCards(); }
+            if(tabId === 'purchases') { resetExpenseFormState(); }
+            if(tabId === 'credit') { renderCreditPayments(); }
         }
 
-        // --- Utils ---
-        function setDefaultExpenseDateTime() {
-            const now = new Date(); const offset = now.getTimezoneOffset() * 60000;
+        // Setup date defaults
+        window.onload = function() {
+            const now = new Date();
+            const offset = now.getTimezoneOffset() * 60000;
             const localISOTime = (new Date(now - offset)).toISOString().slice(0, 16);
             if(document.getElementById('exp-datetime')) document.getElementById('exp-datetime').value = localISOTime;
+            if(document.getElementById('so-date')) document.getElementById('so-date').value = localISOTime.split('T')[0];
+        };
+
+        function resetExpenseFormState() {
+            document.getElementById('expense-form').reset();
+            document.getElementById('edit-exp-index').value = "";
+            document.getElementById('btn-submit-expense').innerText = "Add Record";
+            const now = new Date();
+            const localISOTime = (new Date(now - now.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+            document.getElementById('exp-datetime').value = localISOTime;
         }
 
-        function populateDropdownSelects() {
-            const bindSelect = (id, csvString) => {
-                let select = document.getElementById(id);
-                if(!select || !csvString) return;
-                select.innerHTML = '';
-                csvString.split(',').forEach(v => {
-                    select.innerHTML += `<option value="${v.trim()}">${v.trim()}</option>`;
-                });
-            };
-            bindSelect('so-pay-method', window.appSettings.arrPayment);
-            bindSelect('so-del-method', window.appSettings.arrDelivery);
-            bindSelect('so-del-status', window.appSettings.arrStatus);
-            
-            // Populate Filters
-            bindSelect('card-filter-status', "All Delivery Status," + window.appSettings.arrStatus);
-            document.getElementById('card-filter-status').options[0].value = "";
-            bindSelect('so-filter-delivery', "All Delivery Status," + window.appSettings.arrStatus);
-            document.getElementById('so-filter-delivery').options[0].value = "";
-            
-            // Populate Dashboard payment filter based on settings
-            bindSelect('dash-filter-payment', "All Payment Methods," + window.appSettings.arrPayment);
-            document.getElementById('dash-filter-payment').options[0].value = "";
-
-            let cSelect = document.getElementById('so-cust-select');
-            if(cSelect) {
-                cSelect.innerHTML = '<option value="">-- Choose Profile --</option>';
-                window.customers.forEach(c => {
-                    cSelect.innerHTML += `<option value="${c.phone}">${c.name} (${c.phone})</option>`;
-                });
+        // --- Dashboard & Math Logic ---
+        function sortDashboard(col) {
+            if(window.sortState.dashboard.col === col) {
+                window.sortState.dashboard.asc = !window.sortState.dashboard.asc;
+            } else {
+                window.sortState.dashboard.col = col;
+                window.sortState.dashboard.asc = true;
             }
-
-            // Dashboard Region filter
-            let rSelect = document.getElementById('dash-filter-region');
-            let regions = new Set();
-            window.salesOrders.forEach(so => { if(so.region) regions.add(so.region.trim()); });
-            rSelect.innerHTML = '<option value="">All Regions</option>';
-            regions.forEach(r => { rSelect.innerHTML += `<option value="${r}">${r}</option>`; });
-        }
-
-        // --- Dashboard Logic ---
-        function sortDashboardTable(key) {
-            if(dashSort.key === key) dashSort.asc = !dashSort.asc;
-            else { dashSort.key = key; dashSort.asc = true; }
+            // Reset icons
+            ['id', 'date', 'region', 'paymentMethod', 'totalAmount'].forEach(c => {
+                document.getElementById(`ds-icon-${c}`).innerText = '↕';
+            });
+            document.getElementById(`ds-icon-${col}`).innerText = window.sortState.dashboard.asc ? '↑' : '↓';
             renderDashboard();
         }
 
+        let dashCalculatedCogs = 0;
+        let dashCalculatedOpExps = [];
+
         function renderDashboard() {
-            let month = document.getElementById('dash-filter-month').value;
-            let region = document.getElementById('dash-filter-region').value;
-            let payment = document.getElementById('dash-filter-payment').value;
+            let selectedMonth = document.getElementById('dash-filter-month').value;
+            let selectedRegion = document.getElementById('dash-filter-region').value;
+            let selectedPayment = document.getElementById('dash-filter-payment').value;
             
-            let revenue = 0, cogsCost = 0, otherExpenses = 0, totalOrders = 0, refundOrders = 0;
-            let expBreakdown = { cogs: 0, categories: {} }; // For the breakdown modal
-            
-            let tbody = document.getElementById('dash-table-body');
-            tbody.innerHTML = '';
-
-            // Update Sort Icons
-            ['id', 'date', 'region', 'paymentMethod', 'totalAmount'].forEach(k => {
-                let el = document.getElementById(`dash-sort-${k}`);
-                if(el) el.innerText = dashSort.key === k ? (dashSort.asc ? '▲' : '▼') : '';
-            });
-
-            // Calculate other expenses (from purchases tab) matching month
-            window.expenses.forEach(exp => {
-                let expMonth = exp.datetime ? exp.datetime.split('T')[0].split('-')[1] : '';
-                if(!month || expMonth === month) {
-                    let amt = Number(exp.amount || 0);
-                    otherExpenses += amt;
-                    expBreakdown.categories[exp.cat] = (expBreakdown.categories[exp.cat] || 0) + amt;
-                }
-            });
+            let revenue = 0, totalCostOfGoods = 0;
+            let dTable = document.getElementById('dash-table-body');
+            if(!dTable) return;
+            dTable.innerHTML = '';
 
             let filteredSales = window.salesOrders.filter(so => {
-                let mMatch = month ? (so.date && so.date.split('-')[1] === month) : true;
-                let rMatch = region ? (so.region === region) : true;
-                let pMatch = payment ? (so.paymentMethod === payment) : true;
-                return mMatch && rMatch && pMatch;
+                let soMonth = so.date ? so.date.split('-')[1] : '';
+                let matchMonth = selectedMonth ? (soMonth === selectedMonth) : true;
+                let matchRegion = selectedRegion ? (so.region === selectedRegion) : true;
+                let matchPay = selectedPayment ? (so.payStatus === selectedPayment) : true;
+                return matchMonth && matchRegion && matchPay;
             });
 
-            // Apply Sort
+            // Sorting logic for Dashboard Table
             filteredSales.sort((a, b) => {
-                let valA = a[dashSort.key]; let valB = b[dashSort.key];
-                if(dashSort.key === 'totalAmount' || dashSort.key === 'id') { valA = Number(valA); valB = Number(valB); }
-                if(valA < valB) return dashSort.asc ? -1 : 1;
-                if(valA > valB) return dashSort.asc ? 1 : -1;
+                let valA = a[window.sortState.dashboard.col];
+                let valB = b[window.sortState.dashboard.col];
+                if(window.sortState.dashboard.col === 'totalAmount') { valA = Number(valA); valB = Number(valB); }
+                
+                if (valA < valB) return window.sortState.dashboard.asc ? -1 : 1;
+                if (valA > valB) return window.sortState.dashboard.asc ? 1 : -1;
                 return 0;
             });
 
             filteredSales.forEach(so => {
-                totalOrders++;
-                if(so.payStatus === 'Refunded') refundOrders++;
-                
-                let rowCost = 0, rowSale = 0;
-                (so.items || []).forEach(i => {
-                    rowCost += (Number(i.cost || 0) * Number(i.qty || 0));
-                    rowSale += (Number(i.rate || 0) * Number(i.qty || 0));
-                });
+                let totalRowCost = 0;
+                if (so.items) {
+                    so.items.forEach(item => { totalRowCost += (Number(item.cost || 0) * Number(item.qty || 0)); });
+                }
 
                 if(so.payStatus === 'Done') {
                     revenue += Number(so.totalAmount);
-                    cogsCost += rowCost;
+                    totalCostOfGoods += totalRowCost;
                 }
-
-                let marginPct = rowSale > 0 ? (1 - (rowCost / rowSale)) * 100 : 0;
                 
-                tbody.innerHTML += `
-                    <tr class="hover:bg-gray-50 border-b border-gray-100">
-                        <td class="p-3 font-bold"><a href="#" onclick="viewInvoice(${so.id}); return false;" class="text-blue-600 hover:underline">#${so.id}</a></td>
+                let badgeClass = so.payStatus === 'Done' ? 'bg-green-100 text-green-800' : (so.payStatus === 'Refunded' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800');
+
+                dTable.innerHTML += `
+                    <tr class="hover:bg-gray-50 border-b border-gray-100 cursor-pointer" onclick="viewInvoice(${so.id})">
+                        <td class="p-3 font-bold text-blue-600">#${so.id}</td>
                         <td class="p-3 font-medium">${so.date}</td>
                         <td class="p-3 text-gray-600">${so.region}</td>
-                        <td class="p-3"><span class="bg-gray-100 px-2 py-0.5 rounded text-xs">${so.paymentMethod}</span></td>
-                        <td class="p-3 font-bold">${Number(so.totalAmount).toLocaleString()} MMK</td>
-                        <td class="p-3 text-cyan-600 font-semibold">${marginPct.toFixed(1)}%</td>
+                        <td class="p-3"><span class="px-2 py-0.5 rounded text-xs font-semibold ${badgeClass}">${so.paymentMethod} (${so.payStatus})</span></td>
+                        <td class="p-3 font-bold text-right">${Number(so.totalAmount).toLocaleString()} MMK</td>
                     </tr>`;
             });
 
-            let totalAbsoluteExpenses = cogsCost + otherExpenses;
-            let netProfit = revenue - totalAbsoluteExpenses;
-            
-            expBreakdown.cogs = cogsCost;
-            window.currentDashStats = expBreakdown; // Save to memory for modal popup
+            // Calculate Operational Expenses
+            let opExps = [];
+            let totalOpExp = 0;
+            window.expenses.forEach(e => {
+                let expMonth = e.datetime ? e.datetime.split('T')[0].split('-')[1] : '';
+                if(selectedMonth && expMonth !== selectedMonth) return;
+                // Accumulate non-product purchase expenses
+                if(e.cat !== "Product Purchase") {
+                    totalOpExp += Number(e.amount);
+                    let existing = opExps.find(x => x.cat === e.cat);
+                    if(existing) existing.amount += Number(e.amount);
+                    else opExps.push({cat: e.cat, amount: Number(e.amount)});
+                }
+            });
+
+            dashCalculatedCogs = totalCostOfGoods;
+            dashCalculatedOpExps = opExps;
+
+            let totalExpensesAmount = totalCostOfGoods + totalOpExp;
+            let netProfitAmount = revenue - totalExpensesAmount;
 
             document.getElementById('dash-revenue').innerText = `${revenue.toLocaleString()} MMK`;
-            document.getElementById('dash-cost').innerText = `${cogsCost.toLocaleString()} MMK`;
-            document.getElementById('dash-expenses').innerText = `${totalAbsoluteExpenses.toLocaleString()} MMK`;
-            document.getElementById('dash-margin').innerText = `${netProfit.toLocaleString()} MMK`;
-            document.getElementById('dash-orders').innerText = totalOrders;
-            document.getElementById('dash-refunds').innerText = refundOrders;
+            document.getElementById('dash-cogs').innerText = `${totalCostOfGoods.toLocaleString()} MMK`;
+            document.getElementById('dash-expenses').innerText = `${totalExpensesAmount.toLocaleString()} MMK`;
+            document.getElementById('dash-margin').innerText = `${netProfitAmount.toLocaleString()} MMK`;
+            
+            // Adjust margin color
+            document.getElementById('dash-margin').className = netProfitAmount < 0 
+                ? "text-lg md:text-xl font-bold mt-1 text-red-600" 
+                : "text-lg md:text-xl font-bold mt-1 text-green-600";
         }
 
-        function showExpenseBreakdown() {
-            let stats = window.currentDashStats;
-            if(!stats) return;
-            let container = document.getElementById('expense-breakdown-content');
-            
-            container.innerHTML = `
-                <div class="flex justify-between items-center border-b border-gray-100 pb-2">
-                    <span class="font-semibold text-gray-600">Total Cost (COGS from Orders)</span>
-                    <span class="font-bold text-orange-600">${stats.cogs.toLocaleString()} MMK</span>
-                </div>
-            `;
-            let totalOther = 0;
-            for(let cat in stats.categories) {
-                let amt = stats.categories[cat];
-                totalOther += amt;
-                container.innerHTML += `
-                    <div class="flex justify-between items-center border-b border-gray-100 pb-2">
-                        <span class="font-semibold text-gray-600">${cat}</span>
-                        <span class="font-bold text-red-500">${amt.toLocaleString()} MMK</span>
-                    </div>
-                `;
+        function openExpenseBreakdown() {
+            document.getElementById('eb-cogs').innerText = `${dashCalculatedCogs.toLocaleString()} MMK`;
+            let ul = document.getElementById('eb-list');
+            ul.innerHTML = '';
+            let opTotal = 0;
+            if(dashCalculatedOpExps.length === 0) {
+                ul.innerHTML = `<li class="text-gray-400 italic">No operational expenses.</li>`;
+            } else {
+                dashCalculatedOpExps.forEach(e => {
+                    opTotal += e.amount;
+                    ul.innerHTML += `<li class="flex justify-between items-center bg-gray-50 p-2 rounded"><span>${e.cat}</span><span class="font-bold text-gray-700">${e.amount.toLocaleString()} MMK</span></li>`;
+                });
             }
-            container.innerHTML += `
-                <div class="flex justify-between items-center pt-2">
-                    <span class="font-bold text-gray-800">Total Calculation</span>
-                    <span class="font-bold text-red-600 text-lg">${(stats.cogs + totalOther).toLocaleString()} MMK</span>
-                </div>
-            `;
+            let grand = dashCalculatedCogs + opTotal;
+            document.getElementById('eb-total').innerText = `${grand.toLocaleString()} MMK`;
             document.getElementById('expense-breakdown-modal').classList.remove('hidden');
         }
 
         // --- Internal Cards ---
         function renderInternalCards() {
-            let q = document.getElementById('card-search').value.toLowerCase();
-            let sDate = document.getElementById('card-sort-date').value; // 'desc' or 'asc'
-            let dStatus = document.getElementById('card-filter-status').value;
+            let search = document.getElementById('card-search').value.toLowerCase();
+            let sortType = document.getElementById('card-sort-date').value;
+            let filterDel = document.getElementById('card-filter-del').value;
             let container = document.getElementById('internal-cards-container');
             container.innerHTML = '';
 
-            let matches = window.salesOrders.filter(so => {
-                let matchSearch = so.customerName.toLowerCase().includes(q) || so.phone.includes(q);
-                let matchStatus = dStatus ? (so.deliveryStatus === dStatus) : true;
-                return matchSearch && matchStatus;
-            });
+            let cards = [...window.salesOrders];
+            cards.sort((a, b) => sortType === 'new' ? new Date(b.date) - new Date(a.date) : new Date(a.date) - new Date(b.date));
 
-            matches.sort((a, b) => {
-                let d1 = new Date(a.date), d2 = new Date(b.date);
-                return sDate === 'desc' ? d2 - d1 : d1 - d2;
-            });
+            cards.forEach(so => {
+                let matchSearch = so.customerName.toLowerCase().includes(search) || so.phone.includes(search);
+                let matchDel = filterDel ? so.deliveryStatus === filterDel : true;
+                if(!matchSearch || !matchDel) return;
 
-            matches.forEach(so => {
-                let itemsListHtml = (so.items || []).map(i => `<li class="flex justify-between text-xs bg-slate-100 p-1 rounded"><span>${i.desc}</span> <span class="font-bold">x ${i.qty}</span></li>`).join('');
-                
-                let dBadge = so.deliveryStatus === 'Delivered' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800';
+                let itemsHtml = (so.items || []).map(i => `<li class="flex justify-between text-[11px] bg-slate-100 p-1 rounded mb-1"><span>${i.desc}</span> <span class="font-bold">x${i.qty}</span></li>`).join('');
+                let bgClass = so.deliveryStatus === 'Delivered' ? 'border-t-green-500' : 'border-t-blue-500';
 
                 container.innerHTML += `
-                    <div class="bg-white p-5 rounded-xl shadow-xs border-t-4 border-slate-700 space-y-3 relative hover:shadow-md transition">
+                    <div class="bg-white p-4 rounded-xl shadow-xs border-t-4 ${bgClass} space-y-3 relative hover:shadow-md transition">
                         <div class="flex justify-between items-start border-b pb-2">
                             <div>
-                                <span class="text-xs font-mono font-bold text-gray-400">#${so.id} | ${so.date}</span>
-                                <h5 class="font-bold text-base text-gray-900 mt-0.5">${so.customerName}</h5>
+                                <span class="text-[10px] font-mono font-bold text-gray-400">#${so.id} - ${so.date}</span>
+                                <h5 class="font-bold text-sm text-gray-900 mt-0.5">${so.customerName}</h5>
                             </div>
-                            <div class="flex flex-col gap-1.5 items-end">
-                                <span class="text-[10px] px-2 py-0.5 rounded font-bold ${dBadge}">${so.deliveryStatus}</span>
-                                <div class="flex gap-1.5">
-                                    <button onclick="zoomCardProfile(${so.id})" class="text-xs bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded font-bold border">Zoom</button>
-                                </div>
+                            <div class="flex gap-1">
+                                <button onclick="zoomCardProfile(${so.id})" class="text-[10px] bg-slate-100 px-2 py-1 rounded font-bold border">Zoom</button>
                             </div>
                         </div>
-                        <div class="text-xs space-y-1.5 text-gray-700">
-                            <p><strong>Phone:</strong> ${so.phone}</p>
-                            <p><strong>Method:</strong> ${so.deliveryMethod}</p>
+                        <div class="text-[11px] space-y-1 text-gray-700">
+                            <p><strong>Ph:</strong> ${so.phone}</p>
+                            <p><strong>Del:</strong> <span class="bg-blue-50 text-blue-800 px-1 rounded">${so.deliveryMethod} (${so.deliveryStatus})</span></p>
                         </div>
-                        <div class="border-t pt-2"><ul class="space-y-1">${itemsListHtml}</ul></div>
-                        ${so.customInstruction ? `<div class="border-t pt-2 bg-amber-50/50 p-2 rounded-lg border border-amber-100"><p class="text-[11px] text-amber-900 font-bold uppercase">Instruction:</p><p class="text-xs italic">${so.customInstruction}</p></div>` : ''}
-                    </div>`;
+                        <div class="border-t pt-1"><ul class="max-h-24 overflow-y-auto">${itemsHtml}</ul></div>
+                        ${so.customInstruction ? `<div class="bg-amber-50 p-1.5 rounded border border-amber-100 text-[10px] text-amber-950 font-medium italic overflow-hidden text-ellipsis">${so.customInstruction}</div>` : ''}
+                    </div>
+                `;
             });
         }
-        
-        function zoomCardProfile(id) {
-            let record = window.salesOrders.find(so => so.id == id);
-            if (!record) return;
-            document.getElementById('zoom-card-id').innerText = `Order: #${record.id}`;
-            document.getElementById('zoom-card-name').innerText = record.customerName;
-            document.getElementById('zoom-card-phone').innerText = record.phone;
-            document.getElementById('zoom-card-address').innerText = record.address || record.region;
-            document.getElementById('zoom-card-delivery').innerText = `${record.deliveryMethod} (${record.deliveryStatus})`;
-            let ul = document.getElementById('zoom-card-items'); ul.innerHTML = '';
-            (record.items || []).forEach(i => { ul.innerHTML += `<li class="flex justify-between items-center text-sm bg-blue-50/60 border border-blue-100 p-2 rounded-lg font-medium"><span>${i.desc}</span><span class="font-bold text-blue-800 text-base">x ${i.qty}</span></li>`; });
-            document.getElementById('zoom-card-custom').innerText = record.customInstruction || 'None';
-            document.getElementById('zoom-card-other').innerText = record.otherInstruction || 'None';
-            document.getElementById('zoom-card-modal').classList.remove('hidden');
-        }
-        function closeZoomModal() { document.getElementById('zoom-card-modal').classList.add('hidden'); }
 
-        // --- Sales Orders ---
-        function filterSales() {
-            let q = document.getElementById('so-search').value.toLowerCase();
-            let pay = document.getElementById('so-filter-payment').value;
-            let del = document.getElementById('so-filter-delivery').value;
+        // --- Sale Orders & Quick Actions ---
+        function filterSales() { renderSalesTable(); }
+        
+        function updateStatusAction(selectElem, type, id) {
+            let newVal = selectElem.value;
+            let orderIndex = window.salesOrders.findIndex(s => s.id == id);
+            if(orderIndex < 0) return;
+            let order = window.salesOrders[orderIndex];
             
-            let rows = document.querySelectorAll('#so-table-body tr');
-            rows.forEach(row => {
-                let dataAttr = row.getAttribute('data-search').toLowerCase();
-                let pStat = row.getAttribute('data-pay');
-                let dStat = row.getAttribute('data-del');
-                
-                let mQ = dataAttr.includes(q);
-                let mP = pay ? (pStat === pay) : true;
-                let mD = del ? (dStat === del) : true;
-                
-                if(mQ && mP && mD) row.classList.remove('hidden'); else row.classList.add('hidden');
-            });
+            let requireAuth = false;
+            // Protect changing away from 'Done' or 'Delivered'
+            if(type === 'payment' && order.payStatus === 'Done' && newVal !== 'Done') requireAuth = true;
+            if(type === 'delivery' && order.deliveryStatus === 'Delivered' && newVal !== 'Delivered') requireAuth = true;
+
+            if(requireAuth) {
+                let pass = prompt(`Admin authorization required to revert '${type}' status. Enter password:`);
+                if(pass !== 'admin22') {
+                    alert("Authorization failed.");
+                    selectElem.value = type === 'payment' ? order.payStatus : order.deliveryStatus;
+                    return;
+                }
+            }
+
+            if(type === 'payment') {
+                order.payStatus = newVal;
+                if(newVal === 'Done') order.paymentTimestamp = new Date().toLocaleString('en-US', { hour12: false });
+                else if(newVal === 'Pending') order.paymentTimestamp = 'N/A';
+            } else if (type === 'delivery') {
+                order.deliveryStatus = newVal;
+            }
+
+            window.salesOrders[orderIndex] = order;
+            window.syncToFirebaseCloud();
+            renderSalesTable();
+            if(currentTab === 'dashboard') renderDashboard();
         }
 
         function renderSalesTable() {
+            let query = document.getElementById('so-search').value.toLowerCase();
+            let pFilter = document.getElementById('so-filter-payment').value;
+            let dFilter = document.getElementById('so-filter-delivery').value;
             let tbody = document.getElementById('so-table-body');
+            if(!tbody) return;
             tbody.innerHTML = '';
-            // Render Latest First
-            let sorted = [...window.salesOrders].sort((a,b) => new Date(b.date) - new Date(a.date));
-            
-            sorted.forEach(so => {
-                let badgeClass = so.payStatus === 'Done' ? 'bg-green-100 text-green-800' : (so.payStatus === 'Refunded' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800');
+
+            // Reverse to show newest first
+            let list = [...window.salesOrders].reverse();
+
+            list.forEach(so => {
+                let matchSearch = so.customerName.toLowerCase().includes(query) || so.phone.includes(query) || String(so.id).includes(query);
+                let matchPay = pFilter ? so.payStatus === pFilter : true;
+                let matchDel = dFilter ? so.deliveryStatus === dFilter : true;
                 
-                tbody.innerHTML += `
-                    <tr class="border-b border-gray-100 hover:bg-gray-50" data-search="${so.id} ${so.customerName} ${so.phone}" data-pay="${so.payStatus}" data-del="${so.deliveryStatus}">
-                        <td class="p-3 font-bold text-blue-600">#${so.id}</td>
-                        <td class="p-3"><div class="font-semibold">${so.customerName}</div><div class="text-xs text-gray-500">${so.phone}</div></td>
-                        <td class="p-3 text-gray-600">${so.date}</td>
-                        <td class="p-3 font-bold">${Number(so.totalAmount).toLocaleString()} MMK</td>
-                        <td class="p-3">
-                            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold cursor-pointer hover:opacity-80 ${badgeClass}" onclick="openQuickPayment(${so.id})">${so.payStatus} ✎</span>
-                        </td>
-                        <td class="p-3 text-xs text-gray-500">${so.deliveryMethod || 'N/A'}<br>
-                            <span class="font-bold cursor-pointer text-blue-600 hover:text-blue-800" onclick="openQuickDelivery(${so.id})">${so.deliveryStatus} ✎</span>
-                        </td>
-                        <td class="p-3 text-right space-x-1">
-                            <button onclick="viewInvoice(${so.id})" class="text-xs bg-slate-900 text-white px-2 py-1 rounded font-medium">View</button>
-                            <button onclick="initiateSecureEditSequence(${so.id})" class="text-xs border border-gray-300 px-2 py-1 rounded font-medium">Edit</button>
-                        </td>
-                    </tr>`;
-            });
-        }
-        
-        function openQuickPayment(id) {
-            let so = window.salesOrders.find(s => s.id == id);
-            if(!so) return;
-            document.getElementById('quick-so-id').value = id;
-            document.getElementById('quick-so-status').value = so.payStatus;
-            document.getElementById('quick-payment-modal').classList.remove('hidden');
-        }
-        function saveQuickPayment() {
-            let id = document.getElementById('quick-so-id').value;
-            let nStatus = document.getElementById('quick-so-status').value;
-            let idx = window.salesOrders.findIndex(s => s.id == id);
-            if(idx > -1) {
-                let current = window.salesOrders[idx].payStatus;
-                if(current === 'Done' && nStatus !== 'Done') {
-                    if(prompt("Enter Admin Password to change finalized payment (admin22):") !== 'admin22') {
-                        alert("Unauthorized Action!"); return;
-                    }
+                if (matchSearch && matchPay && matchDel) {
+                    let dOptsHtml = window.appSettings.arrStatus.split(',').map(s => {
+                        let val = s.trim(); return `<option value="${val}" ${val === so.deliveryStatus ? 'selected' : ''}>${val}</option>`;
+                    }).join('');
+
+                    tbody.innerHTML += `
+                        <tr class="border-b border-gray-100 hover:bg-gray-50">
+                            <td class="p-3 font-bold text-blue-600">#${so.id}</td>
+                            <td class="p-3"><div class="font-semibold">${so.customerName}</div><div class="text-xs text-gray-500">${so.phone}</div></td>
+                            <td class="p-3 text-gray-600 text-xs">${so.date}</td>
+                            <td class="p-3 font-bold">${Number(so.totalAmount).toLocaleString()} MMK</td>
+                            <td class="p-3">
+                                <select onchange="updateStatusAction(this, 'payment', ${so.id})" class="text-xs p-1 border rounded w-full ${so.payStatus === 'Done' ? 'bg-green-50 text-green-700' : 'bg-white'}">
+                                    <option value="Pending" ${so.payStatus === 'Pending' ? 'selected' : ''}>Pending</option>
+                                    <option value="Done" ${so.payStatus === 'Done' ? 'selected' : ''}>Done</option>
+                                    <option value="Refunded" ${so.payStatus === 'Refunded' ? 'selected' : ''}>Refunded</option>
+                                </select>
+                            </td>
+                            <td class="p-3">
+                                <select onchange="updateStatusAction(this, 'delivery', ${so.id})" class="text-xs p-1 border rounded w-full ${so.deliveryStatus === 'Delivered' ? 'bg-blue-50 text-blue-700' : 'bg-white'}">
+                                    ${dOptsHtml}
+                                </select>
+                            </td>
+                            <td class="p-3 text-right space-x-1">
+                                <button onclick="viewInvoice(${so.id})" class="text-[10px] md:text-xs bg-slate-900 text-white px-2 py-1 rounded font-medium">View</button>
+                                <button onclick="initiateSecureEditSequence(${so.id})" class="text-[10px] md:text-xs border border-gray-300 text-gray-700 px-2 py-1 rounded font-medium">Edit</button>
+                            </td>
+                        </tr>`;
                 }
-                window.salesOrders[idx].payStatus = nStatus;
-                if(nStatus === 'Done' || nStatus === 'Refunded') window.salesOrders[idx].paymentTimestamp = new Date().toLocaleString('en-US', { hour12: false });
-                window.syncToFirebaseCloud();
-                renderSalesTable(); renderDashboard();
-                document.getElementById('quick-payment-modal').classList.add('hidden');
-            }
-        }
-
-        function openQuickDelivery(id) {
-            let so = window.salesOrders.find(s => s.id == id);
-            if(!so) return;
-            document.getElementById('quick-del-so-id').value = id;
-            let delSelect = document.getElementById('quick-del-status');
-            delSelect.innerHTML = '';
-            window.appSettings.arrStatus.split(',').forEach(v => {
-                delSelect.innerHTML += `<option value="${v.trim()}">${v.trim()}</option>`;
-            });
-            delSelect.value = so.deliveryStatus;
-            document.getElementById('quick-delivery-modal').classList.remove('hidden');
-        }
-        function saveQuickDelivery() {
-            let id = document.getElementById('quick-del-so-id').value;
-            let nStatus = document.getElementById('quick-del-status').value;
-            let idx = window.salesOrders.findIndex(s => s.id == id);
-            if(idx > -1) {
-                let current = window.salesOrders[idx].deliveryStatus;
-                if(current.toLowerCase().includes('delivered') && nStatus !== current) {
-                    if(prompt("Enter Admin Password to change Delivered status (admin22):") !== 'admin22') {
-                        alert("Unauthorized Action!"); return;
-                    }
-                }
-                window.salesOrders[idx].deliveryStatus = nStatus;
-                window.syncToFirebaseCloud();
-                renderSalesTable();
-                document.getElementById('quick-delivery-modal').classList.add('hidden');
-            }
-        }
-
-        // Make Modal / Items Logic Available
-        function openNewOrderModal() {
-            document.getElementById('so-form').reset(); document.getElementById('edit-so-id').value = '';
-            document.getElementById('edit-item-index').value = ''; document.getElementById('modal-title').innerText = "Create Sale Order";
-            window.globalItemsAccumulator = []; renderModalItemsTable();
-            document.getElementById('so-modal').classList.remove('hidden');
-        }
-        function closeOrderModal() { document.getElementById('so-modal').classList.add('hidden'); }
-        function toggleTrackingField(v) { document.getElementById('tracking-container').className = (v.toLowerCase().includes('royal') || v.toLowerCase().includes('express')) ? '' : 'hidden'; }
-        function addItemToGrid() {
-            let desc = document.getElementById('item-desc').value, qty = Number(document.getElementById('item-qty').value), cost = Number(document.getElementById('item-cost').value), rate = Number(document.getElementById('item-rate').value), editIndex = document.getElementById('edit-item-index').value;
-            if(!desc || qty <= 0 || rate <= 0) return alert("Valid input required.");
-            let itemObj = { desc, qty, cost, rate, total: qty * rate };
-            if (editIndex !== "") { window.globalItemsAccumulator[Number(editIndex)] = itemObj; document.getElementById('edit-item-index').value = ""; document.getElementById('btn-add-item').innerText = "+ Add / Update Item"; } 
-            else window.globalItemsAccumulator.push(itemObj);
-            document.getElementById('item-desc').value = ''; document.getElementById('item-qty').value = ''; document.getElementById('item-cost').value = ''; document.getElementById('item-rate').value = '';
-            renderModalItemsTable();
-        }
-        function renderModalItemsTable() {
-            let tbody = document.getElementById('modal-items-tbody'); tbody.innerHTML = '';
-            window.globalItemsAccumulator.forEach((item, index) => {
-                tbody.innerHTML += `<tr class="hover:bg-gray-50"><td class="p-2 font-medium">${item.desc}</td><td class="p-2 text-center font-bold">${item.qty}</td><td class="p-2 text-right">${Number(item.cost || 0).toLocaleString()}</td><td class="p-2 text-right">${item.rate.toLocaleString()}</td><td class="p-2 text-right font-semibold">${item.total.toLocaleString()} MMK</td><td class="p-2 text-center"><button type="button" onclick="loadItemToInputs(${index})" class="text-blue-600 px-1">Edit</button><button type="button" onclick="removeItemFromGrid(${index})" class="text-red-500 px-1">Del</button></td></tr>`;
             });
         }
-        function loadItemToInputs(i) { let item = window.globalItemsAccumulator[i]; document.getElementById('item-desc').value = item.desc; document.getElementById('item-qty').value = item.qty; document.getElementById('item-cost').value = item.cost || 0; document.getElementById('item-rate').value = item.rate; document.getElementById('edit-item-index').value = i; document.getElementById('btn-add-item').innerText = "Update"; }
-        function removeItemFromGrid(i) { window.globalItemsAccumulator.splice(i, 1); renderModalItemsTable(); }
-        
-        function processSaleOrder(e) {
-            e.preventDefault();
-            let editId = document.getElementById('edit-so-id').value;
-            let cPhone = document.getElementById('so-cust-select').value;
-            let customerObj = window.customers.find(c => c.phone === cPhone) || { name: "Guest", phone: cPhone, address: "N/A" };
-            if(window.globalItemsAccumulator.length === 0) return alert("Add items!");
-            
-            let subtotal = window.globalItemsAccumulator.reduce((sum, i) => sum + i.total, 0);
-            let discType = document.getElementById('so-disc-type').value, discVal = Number(document.getElementById('so-disc-val').value);
-            let finalDiscount = discType === 'fix' ? discVal : (discType === 'percent' ? (subtotal * (discVal / 100)) : 0);
-            let taxPct = Number(document.getElementById('so-tax').value);
-            let finalTotal = (subtotal - finalDiscount) + ((subtotal - finalDiscount) * (taxPct / 100));
-            let currentStatus = document.getElementById('so-pay-status').value;
-            let tStamp = currentStatus === 'Done' ? new Date().toLocaleString('en-US', { hour12: false }) : 'N/A';
 
-            let baseData = {
-                customerName: customerObj.name, phone: customerObj.phone, address: customerObj.address,
-                region: document.getElementById('so-region').value, date: document.getElementById('so-date').value,
-                paymentMethod: document.getElementById('so-pay-method').value, payStatus: currentStatus,
-                deliveryMethod: document.getElementById('so-del-method').value, deliveryStatus: document.getElementById('so-del-status').value,
-                trackingLink: document.getElementById('so-tracking-link').value || '', items: window.globalItemsAccumulator,
-                subtotal: subtotal, discount: finalDiscount, tax: taxPct, totalAmount: finalTotal,
-                customInstruction: document.getElementById('so-custom-instruction').value, otherInstruction: document.getElementById('so-other-instruction').value,
-                creditStatus: 'Unpaid' // Default credit state
-            };
-
-            if(editId) {
-                let idx = window.salesOrders.findIndex(so => so.id == editId);
-                let old = window.salesOrders[idx];
-                baseData.paymentTimestamp = (old.payStatus === 'Done' && currentStatus === 'Done') ? old.paymentTimestamp : tStamp;
-                baseData.id = old.id; baseData.creditStatus = old.creditStatus || 'Unpaid';
-                window.salesOrders[idx] = baseData;
-            } else {
-                baseData.id = Math.floor(100000 + Math.random() * 900000);
-                baseData.paymentTimestamp = tStamp;
-                window.salesOrders.push(baseData);
-            }
-            window.syncToFirebaseCloud(); closeOrderModal();
-        }
-
-        function initiateSecureEditSequence(id) {
-            let pass = prompt("Enter Password:");
-            if(pass === 'admin22') {
-                let r = window.salesOrders.find(so => so.id == id);
-                openNewOrderModal();
-                document.getElementById('modal-title').innerText = `Edit SO #${id}`; document.getElementById('edit-so-id').value = id;
-                document.getElementById('so-cust-select').value = r.phone; document.getElementById('so-region').value = r.region;
-                document.getElementById('so-date').value = r.date; document.getElementById('so-pay-method').value = r.paymentMethod;
-                document.getElementById('so-pay-status').value = r.payStatus; document.getElementById('so-del-method').value = r.deliveryMethod;
-                document.getElementById('so-del-status').value = r.deliveryStatus; document.getElementById('so-tracking-link').value = r.trackingLink || '';
-                document.getElementById('so-custom-instruction').value = r.customInstruction || ''; document.getElementById('so-other-instruction').value = r.otherInstruction || '';
-                document.getElementById('so-disc-val').value = r.discount || 0; document.getElementById('so-tax').value = r.tax || 0;
-                window.globalItemsAccumulator = JSON.parse(JSON.stringify(r.items || [])); renderModalItemsTable();
-            } else alert("Failed!");
-        }
-
-        // --- Purchases Logic ---
-        function sortExpenseTable(key) {
-            if(expSort.key === key) expSort.asc = !expSort.asc;
-            else { expSort.key = key; expSort.asc = true; }
+        // --- Purchases Tab ---
+        function sortExpenses(col) {
+            if(window.sortState.expenses.col === col) { window.sortState.expenses.asc = !window.sortState.expenses.asc; } 
+            else { window.sortState.expenses.col = col; window.sortState.expenses.asc = true; }
+            ['datetime', 'desc', 'cat', 'amount'].forEach(c => document.getElementById(`pe-icon-${c}`).innerText = '↕');
+            document.getElementById(`pe-icon-${col}`).innerText = window.sortState.expenses.asc ? '↑' : '↓';
             renderExpensesTable();
         }
 
         function renderExpensesTable() {
-            let cat = document.getElementById('pur-filter-cat').value;
-            let mo = document.getElementById('pur-filter-month').value;
-            let yr = document.getElementById('pur-filter-year').value;
             let tbody = document.getElementById('expense-table-body');
+            if(!tbody) return;
             tbody.innerHTML = '';
-
-            ['datetime', 'desc', 'cat', 'amount'].forEach(k => {
-                document.getElementById(`exp-sort-${k}`).innerText = expSort.key === k ? (expSort.asc ? '▲' : '▼') : '';
-            });
-
-            let filtered = window.expenses.filter(e => {
-                let mCat = cat ? e.cat === cat : true;
-                let dt = e.datetime ? e.datetime.split('T')[0].split('-') : [];
-                let mYr = yr ? dt[0] === yr : true;
-                let mMo = mo ? dt[1] === mo : true;
-                return mCat && mYr && mMo;
-            });
-
-            filtered.sort((a,b) => {
-                let valA = a[expSort.key]; let valB = b[expSort.key];
-                if(expSort.key === 'amount') { valA = Number(valA); valB = Number(valB); }
-                if(valA < valB) return expSort.asc ? -1 : 1;
-                if(valA > valB) return expSort.asc ? 1 : -1;
+            
+            let list = [...window.expenses];
+            list.sort((a, b) => {
+                let valA = a[window.sortState.expenses.col]; let valB = b[window.sortState.expenses.col];
+                if(window.sortState.expenses.col === 'amount') { valA = Number(valA); valB = Number(valB); }
+                if (valA < valB) return window.sortState.expenses.asc ? -1 : 1;
+                if (valA > valB) return window.sortState.expenses.asc ? 1 : -1;
                 return 0;
             });
 
-            filtered.forEach(exp => {
-                let originalIndex = window.expenses.indexOf(exp); // For exact edit/del referencing
+            list.forEach((exp) => {
+                let actualIndex = window.expenses.findIndex(e => e === exp); // To maintain correct edit/delete index
                 tbody.innerHTML += `
                     <tr class="border-b border-gray-100 hover:bg-gray-50">
                         <td class="p-3 font-mono text-gray-600 text-xs">${exp.datetime ? exp.datetime.replace('T', ' ') : ''}</td>
@@ -1369,151 +1195,353 @@
                         <td class="p-3 text-gray-500">${exp.cat}</td>
                         <td class="p-3 font-bold text-red-500">${Number(exp.amount).toLocaleString()} MMK</td>
                         <td class="p-3 text-right space-x-2">
-                            <button onclick="initiateExpenseEdit(${originalIndex})" class="text-xs text-blue-600 font-semibold">Edit</button>
-                            <button onclick="initiateExpenseDelete(${originalIndex})" class="text-xs text-red-500 font-semibold">Del</button>
+                            <button onclick="initiateExpenseEdit(${actualIndex})" class="text-xs text-blue-600 font-semibold">Edit</button>
+                            <button onclick="initiateExpenseDelete(${actualIndex})" class="text-xs text-red-500 font-semibold">Del</button>
                         </td>
                     </tr>`;
             });
         }
-        function saveExpense(e) {
-            e.preventDefault();
-            let idx = document.getElementById('edit-exp-index').value;
-            let obj = { datetime: document.getElementById('exp-datetime').value, desc: document.getElementById('exp-desc').value, amount: document.getElementById('exp-amount').value, cat: document.getElementById('exp-cat').value };
-            if(idx !== "") window.expenses[Number(idx)] = obj; else window.expenses.push(obj);
-            window.syncToFirebaseCloud(); resetExpenseFormState(); renderExpensesTable();
+
+        // --- Credit Payments Tab ---
+        function renderCreditPayments() {
+            let tbody = document.getElementById('credit-table-body');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+            
+            let tPaid = 0, tUnpaid = 0;
+            let list = [...window.salesOrders].reverse();
+
+            list.forEach(so => {
+                let totalCost = 0;
+                if (so.items) { so.items.forEach(i => totalCost += (Number(i.cost || 0) * Number(i.qty || 0))); }
+                
+                if (totalCost > 0) {
+                    let cStatus = so.creditPayStatus || 'Unpaid';
+                    if (cStatus === 'Paid') tPaid += totalCost;
+                    else tUnpaid += totalCost;
+
+                    let badge = cStatus === 'Paid' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+                    let btnText = cStatus === 'Paid' ? 'Revert to Unpaid' : 'Mark as Paid';
+                    let btnClass = cStatus === 'Paid' ? 'text-amber-600' : 'bg-slate-900 text-white hover:bg-slate-800';
+
+                    tbody.innerHTML += `
+                        <tr class="border-b border-gray-100 hover:bg-gray-50">
+                            <td class="p-3 font-bold text-blue-600">#${so.id}</td>
+                            <td class="p-3 text-gray-600 text-xs">${so.date}</td>
+                            <td class="p-3 font-medium">${so.customerName}</td>
+                            <td class="p-3 font-bold">${totalCost.toLocaleString()} MMK</td>
+                            <td class="p-3"><span class="px-2 py-0.5 rounded text-xs font-bold ${badge}">${cStatus}</span></td>
+                            <td class="p-3 text-right">
+                                <button onclick="toggleCreditStatus(${so.id}, '${cStatus}')" class="text-[10px] md:text-xs px-2.5 py-1 rounded font-medium border ${btnClass}">${btnText}</button>
+                            </td>
+                        </tr>`;
+                }
+            });
+
+            document.getElementById('credit-total-paid').innerText = `${tPaid.toLocaleString()} MMK`;
+            document.getElementById('credit-total-unpaid').innerText = `${tUnpaid.toLocaleString()} MMK`;
         }
-        function resetExpenseFormState() { document.getElementById('expense-form').reset(); document.getElementById('edit-exp-index').value = ""; document.getElementById('btn-submit-expense').innerText = "Add Record"; setDefaultExpenseDateTime(); }
-        function initiateExpenseEdit(i) {
-            if (prompt("Passkey:") === 'admin11') {
-                let e = window.expenses[i]; document.getElementById('edit-exp-index').value = i;
-                document.getElementById('exp-datetime').value = e.datetime; document.getElementById('exp-desc').value = e.desc;
-                document.getElementById('exp-amount').value = e.amount; document.getElementById('exp-cat').value = e.cat; document.getElementById('btn-submit-expense').innerText = "Update";
+
+        function toggleCreditStatus(id, currentStatus) {
+            if(currentStatus === 'Paid') {
+                let pass = prompt("Admin authorization required to revert Credit Payment to Unpaid. Enter password:");
+                if(pass !== 'admin22') return alert("Authorization failed.");
+            }
+            let idx = window.salesOrders.findIndex(s => s.id == id);
+            if(idx > -1) {
+                window.salesOrders[idx].creditPayStatus = currentStatus === 'Paid' ? 'Unpaid' : 'Paid';
+                window.syncToFirebaseCloud();
+                renderCreditPayments();
             }
         }
-        function initiateExpenseDelete(i) { if(prompt("Passkey:") === 'admin11' && confirm("Sure?")) { window.expenses.splice(i,1); window.syncToFirebaseCloud(); renderExpensesTable(); } }
 
-        // --- Customers ---
-        function saveCustomer(e) { e.preventDefault(); window.customers.push({ name: document.getElementById('cust-name').value, phone: document.getElementById('cust-phone').value, social: document.getElementById('cust-social').value || '#', address: document.getElementById('cust-address').value }); window.syncToFirebaseCloud(); document.getElementById('customer-form').reset(); }
+        // --- Customers Tab ---
         function renderCustomersTable() {
-            let q = document.getElementById('cust-search').value.toLowerCase();
-            let tbody = document.getElementById('customer-table-body'); tbody.innerHTML = '';
+            let search = document.getElementById('cust-search') ? document.getElementById('cust-search').value.toLowerCase() : '';
+            let tbody = document.getElementById('customer-table-body');
+            if(!tbody) return;
+            tbody.innerHTML = '';
             
-            let filtered = window.customers.filter(c => c.name.toLowerCase().includes(q) || c.phone.includes(q));
-            
-            filtered.forEach(c => {
-                tbody.innerHTML += `<tr class="border-b border-gray-100 hover:bg-gray-50"><td class="p-3 font-semibold">${c.name}</td><td class="p-3">${c.phone}</td><td class="p-3 text-gray-500">${c.address}</td><td class="p-3"><a href="${c.social}" target="_blank" class="text-blue-600 underline">Social</a></td><td class="p-3 text-right"><button onclick="viewCustomerDetails('${c.phone}')" class="bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs px-3 py-1 rounded font-bold">Details</button></td></tr>`;
+            window.customers.forEach(c => {
+                if(c.name.toLowerCase().includes(search) || c.phone.includes(search)) {
+                    tbody.innerHTML += `
+                        <tr class="border-b border-gray-100 hover:bg-gray-50">
+                            <td class="p-3 font-semibold">${c.name}</td>
+                            <td class="p-3">${c.phone}</td>
+                            <td class="p-3 text-gray-500 text-xs">${c.address}</td>
+                            <td class="p-3 text-center"><button onclick="viewCustomerDetails('${c.phone}')" class="text-[10px] md:text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold px-3 py-1 rounded">View Details</button></td>
+                        </tr>`;
+                }
             });
         }
+
         function viewCustomerDetails(phone) {
             let c = window.customers.find(x => x.phone === phone);
             if(!c) return;
-            document.getElementById('cd-name').innerText = c.name; document.getElementById('cd-phone').innerText = c.phone;
-            document.getElementById('cd-address').innerText = c.address; document.getElementById('cd-social').href = c.social;
-            
-            let hBody = document.getElementById('cd-history-body'); hBody.innerHTML = '';
+            document.getElementById('cd-name').innerText = c.name;
+            document.getElementById('cd-phone').innerText = c.phone;
+            document.getElementById('cd-address').innerText = c.address;
+            let sLink = document.getElementById('cd-social');
+            if(c.social && c.social !== 'None') { sLink.href = c.social; sLink.innerText = "Visit Profile"; sLink.classList.remove('hidden'); }
+            else { sLink.classList.add('hidden'); }
+
+            let hBody = document.getElementById('cd-history-body');
+            hBody.innerHTML = '';
             let history = window.salesOrders.filter(so => so.phone === phone);
-            
-            if(history.length === 0) { hBody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-400">No orders found.</td></tr>'; } 
+            if(history.length === 0) hBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-400">No previous orders found.</td></tr>`;
             else {
-                history.forEach(h => {
-                    hBody.innerHTML += `<tr class="hover:bg-gray-50"><td class="p-2 font-bold text-blue-600">#${h.id}</td><td class="p-2">${h.date}</td><td class="p-2 font-semibold">${Number(h.totalAmount).toLocaleString()}</td><td class="p-2">${h.payStatus}</td></tr>`;
+                history.forEach(so => {
+                    hBody.innerHTML += `<tr class="hover:bg-gray-50"><td class="p-2 font-bold text-blue-600">#${so.id}</td><td class="p-2">${so.date}</td><td class="p-2 font-bold">${Number(so.totalAmount).toLocaleString()}</td><td class="p-2">${so.payStatus}</td></tr>`;
                 });
             }
             document.getElementById('customer-detail-modal').classList.remove('hidden');
         }
 
-        // --- Credit Payment Logic ---
-        function renderCreditTable() {
-            let filter = document.getElementById('credit-filter-status').value;
-            let tbody = document.getElementById('credit-table-body');
-            tbody.innerHTML = '';
-            
-            let totalPaidAmount = 0;
-            let totalUnpaidAmount = 0;
-
-            window.salesOrders.forEach(so => {
-                // Calculate Total Cost (Credit Owed)
-                let totalCost = (so.items || []).reduce((sum, item) => sum + (Number(item.cost || 0) * Number(item.qty || 0)), 0);
-                if(totalCost <= 0) return; // Skip orders with 0 cost
-
-                let status = so.creditStatus || 'Unpaid';
-                
-                if (status === 'Paid') totalPaidAmount += totalCost;
-                else totalUnpaidAmount += totalCost;
-
-                if(filter && status !== filter) return; // apply filter
-
-                let bClass = status === 'Paid' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
-                
-                tbody.innerHTML += `
-                    <tr class="border-b border-gray-100 hover:bg-gray-50">
-                        <td class="p-3 font-bold">#${so.id}</td>
-                        <td class="p-3 text-gray-500">${so.date}</td>
-                        <td class="p-3 font-medium">${so.customerName}</td>
-                        <td class="p-3 text-right">${Number(so.totalAmount).toLocaleString()} MMK</td>
-                        <td class="p-3 text-right font-bold text-orange-600">${totalCost.toLocaleString()} MMK</td>
-                        <td class="p-3 text-center"><span class="px-2.5 py-0.5 rounded-full text-xs font-semibold ${bClass}">${status}</span></td>
-                        <td class="p-3 text-right">
-                            <button onclick="toggleCreditStatus(${so.id})" class="text-xs bg-slate-800 text-white px-3 py-1 rounded hover:bg-slate-700 transition">Mark ${status === 'Paid' ? 'Unpaid' : 'Paid'}</button>
-                        </td>
-                    </tr>`;
+        // --- Shared & Modal Functions ---
+        function zoomCardProfile(id) {
+            let record = window.salesOrders.find(so => so.id == id);
+            if (!record) return;
+            document.getElementById('zoom-card-id').innerText = `Order: #${record.id}`;
+            document.getElementById('zoom-card-name').innerText = record.customerName;
+            document.getElementById('zoom-card-phone').innerText = record.phone;
+            document.getElementById('zoom-card-address').innerText = record.address || record.region;
+            document.getElementById('zoom-card-delivery').innerText = record.deliveryMethod;
+            let ul = document.getElementById('zoom-card-items');
+            ul.innerHTML = '';
+            (record.items || []).forEach(item => {
+                ul.innerHTML += `<li class="flex justify-between items-center text-sm bg-blue-50/60 border border-blue-100 p-2 rounded-lg font-medium"><span>${item.desc}</span><span class="font-bold text-blue-800">x ${item.qty}</span></li>`;
             });
-            
-            document.getElementById('credit-total-paid').innerText = `${totalPaidAmount.toLocaleString()} MMK`;
-            document.getElementById('credit-total-unpaid').innerText = `${totalUnpaidAmount.toLocaleString()} MMK`;
+            document.getElementById('zoom-card-custom').innerText = record.customInstruction || 'No custom instruction.';
+            document.getElementById('zoom-card-other').innerText = record.otherInstruction || 'None.';
+            document.getElementById('zoom-card-modal').classList.remove('hidden');
         }
 
-        function toggleCreditStatus(id) {
-            let idx = window.salesOrders.findIndex(so => so.id == id);
-            if(idx > -1) {
-                let current = window.salesOrders[idx].creditStatus || 'Unpaid';
-                if(current === 'Paid') {
-                    if(prompt("Enter Admin Password to un-mark a Paid credit (admin22):") !== 'admin22') {
-                        return;
-                    }
-                    window.salesOrders[idx].creditStatus = 'Unpaid';
-                } else {
-                    window.salesOrders[idx].creditStatus = 'Paid';
-                }
-                window.syncToFirebaseCloud();
-                renderCreditTable();
+        let activeInvoiceIdContext = null;
+        function viewInvoice(id) {
+            let order = window.salesOrders.find(so => so.id == id);
+            activeInvoiceIdContext = id;
+
+            document.getElementById('inv-header-logo').innerText = window.appSettings.logo;
+            const invLogoImg = document.getElementById('inv-logo-img');
+            if(window.appSettings.logoImg) { invLogoImg.src = window.appSettings.logoImg; invLogoImg.classList.remove('hidden'); } else { invLogoImg.classList.add('hidden'); }
+            const invSignImg = document.getElementById('inv-sign-img');
+            if(window.appSettings.signImg) { invSignImg.src = window.appSettings.signImg; invSignImg.classList.remove('hidden'); } else { invSignImg.classList.add('hidden'); }
+            
+            document.getElementById('inv-line-address').innerText = `Address: ${window.appSettings.address}`;
+            document.getElementById('inv-line-phone').innerText = `Phone: ${window.appSettings.phone}`;
+            document.getElementById('inv-line-web').innerText = `Web: ${window.appSettings.web}`;
+            document.getElementById('inv-line-email').innerText = `Email: ${window.appSettings.email}`;
+            document.getElementById('inv-lbl-delivery-method').innerText = order.deliveryMethod || 'N/A';
+
+            if(order.paymentTimestamp && order.paymentTimestamp !== 'N/A') {
+                document.getElementById('inv-lbl-payment-time-block').classList.remove('invisible');
+                document.getElementById('inv-lbl-payment-time').innerText = order.paymentTimestamp;
+            } else { document.getElementById('inv-lbl-payment-time-block').classList.add('invisible'); }
+
+            let stampLayer = document.getElementById('invoice-stamp-layer');
+            if(order.payStatus === 'Done') {
+                stampLayer.className = "invoice-stamp stamp-paid"; stampLayer.innerText = "PAID"; stampLayer.classList.remove('hidden');
+                document.getElementById('inv-title-mode').innerText = "DIGITAL INVOICE"; document.getElementById('refund-btn').classList.remove('hidden');
+            } else if(order.payStatus === 'Refunded') {
+                stampLayer.className = "invoice-stamp stamp-refund"; stampLayer.innerText = "REFUNDED"; stampLayer.classList.remove('hidden');
+                document.getElementById('inv-title-mode').innerText = "REFUNDED INVOICE"; document.getElementById('refund-btn').classList.add('hidden');
+            } else {
+                stampLayer.classList.add('hidden'); document.getElementById('inv-title-mode').innerText = "SALE ORDER"; document.getElementById('refund-btn').classList.add('hidden');
+            }
+
+            document.getElementById('inv-lbl-id').innerText = order.id;
+            document.getElementById('inv-lbl-date').innerText = order.date;
+            document.getElementById('inv-lbl-custname').innerText = `${order.customerName} (${order.phone}) - Target: ${order.address || order.region}`;
+
+            let itemTbody = document.getElementById('inv-items-body');
+            itemTbody.innerHTML = '';
+            (order.items || []).forEach((item, index) => {
+                itemTbody.innerHTML += `<tr><td class="p-2 border-r text-center">${index + 1}</td><td class="p-2 border-r font-medium">${item.desc}</td><td class="p-2 border-r text-center">${item.qty}</td><td class="p-2 border-r text-right">${Number(item.rate).toLocaleString()}</td><td class="p-2 text-right font-semibold">${Number(item.total).toLocaleString()}</td></tr>`;
+            });
+
+            document.getElementById('inv-calc-sub').innerText = `${Number(order.subtotal).toLocaleString()} MMK`;
+            document.getElementById('inv-calc-disc').innerText = `-${Number(order.discount).toLocaleString()} MMK`;
+            document.getElementById('inv-calc-tax').innerText = `${order.tax} %`;
+            document.getElementById('inv-calc-total').innerText = `${Number(order.totalAmount).toLocaleString()} MMK`;
+
+            document.getElementById('inv-lbl-availpay').innerText = window.appSettings.payInfo;
+            document.getElementById('inv-lbl-terms').innerText = window.appSettings.terms;
+            document.getElementById('inv-lbl-authname').innerText = window.appSettings.authName;
+            document.getElementById('inv-lbl-authrole').innerText = window.appSettings.authRole;
+
+            // Generate Correct Current URL Verification QR
+            document.getElementById('qr-verify-target').innerHTML = '';
+            let currentUrl = window.location.origin + window.location.pathname;
+            new QRCode(document.getElementById('qr-verify-target'), { text: `${currentUrl}?verify=${order.id}`, width: 70, height: 70 });
+
+            let trackingBlock = document.getElementById('qr-tracking-block');
+            if(order.trackingLink) {
+                trackingBlock.classList.remove('hidden');
+                document.getElementById('tracking-title-lbl').innerText = `${order.deliveryMethod} Tracking`;
+                document.getElementById('qr-tracking-target').innerHTML = '';
+                new QRCode(document.getElementById('qr-tracking-target'), { text: order.trackingLink, width: 70, height: 70 });
+            } else { trackingBlock.classList.add('hidden'); }
+
+            document.getElementById('invoice-modal').classList.remove('hidden');
+        }
+
+        function initiateSecureEditSequence(id) {
+            let pass = prompt("Enter Edit Password:");
+            if(pass === 'admin22') {
+                let record = window.salesOrders.find(so => so.id == id);
+                openNewOrderModal();
+                document.getElementById('modal-title').innerText = `Edit Sale Order #${id}`;
+                document.getElementById('edit-so-id').value = id;
+                document.getElementById('so-cust-select').value = record.phone;
+                document.getElementById('so-region').value = record.region;
+                document.getElementById('so-date').value = record.date;
+                document.getElementById('so-pay-method').value = record.paymentMethod;
+                document.getElementById('so-pay-status').value = record.payStatus;
+                document.getElementById('so-del-method').value = record.deliveryMethod;
+                document.getElementById('so-del-status').value = record.deliveryStatus;
+                document.getElementById('so-tracking-link').value = record.trackingLink || '';
+                document.getElementById('so-custom-instruction').value = record.customInstruction || '';
+                document.getElementById('so-other-instruction').value = record.otherInstruction || '';
+                document.getElementById('so-disc-val').value = record.discount || 0;
+                document.getElementById('so-tax').value = record.tax || 0;
+                window.globalItemsAccumulator = JSON.parse(JSON.stringify(record.items || []));
+                renderModalItemsTable();
+            } else { alert("Auth failed!"); }
+        }
+
+        // Form Submit Functions
+        function processSaleOrder(e) {
+            e.preventDefault();
+            let editId = document.getElementById('edit-so-id').value;
+            let cPhone = document.getElementById('so-cust-select').value;
+            let customerObj = window.customers.find(c => c.phone === cPhone) || { name: "Guest User", phone: cPhone, address: "N/A" };
+            if(window.globalItemsAccumulator.length === 0) return alert("Please add at least 1 item.");
+
+            let subtotal = window.globalItemsAccumulator.reduce((sum, i) => sum + i.total, 0);
+            let discType = document.getElementById('so-disc-type').value;
+            let discVal = Number(document.getElementById('so-disc-val').value);
+            let finalDiscount = discType === 'fix' ? discVal : (discType === 'percent' ? (subtotal * (discVal / 100)) : 0);
+            let taxPct = Number(document.getElementById('so-tax').value);
+            let finalTotal = (subtotal - finalDiscount) + ((subtotal - finalDiscount) * (taxPct / 100));
+
+            let currentStatus = document.getElementById('so-pay-status').value;
+            let currentTimestamp = 'N/A';
+            if(currentStatus === 'Done') currentTimestamp = new Date().toLocaleString('en-US', { hour12: false });
+
+            let newObj = {
+                customerName: customerObj.name, phone: customerObj.phone, address: customerObj.address,
+                region: document.getElementById('so-region').value, date: document.getElementById('so-date').value,
+                paymentMethod: document.getElementById('so-pay-method').value, payStatus: currentStatus, paymentTimestamp: currentTimestamp,
+                deliveryMethod: document.getElementById('so-del-method').value, deliveryStatus: document.getElementById('so-del-status').value,
+                trackingLink: document.getElementById('so-tracking-link').value || '', items: window.globalItemsAccumulator,
+                subtotal: subtotal, discount: finalDiscount, tax: taxPct, totalAmount: finalTotal,
+                customInstruction: document.getElementById('so-custom-instruction').value, otherInstruction: document.getElementById('so-other-instruction').value
+            };
+
+            if(editId) {
+                let targetIdx = window.salesOrders.findIndex(so => so.id == editId);
+                let oldRecord = window.salesOrders[targetIdx];
+                let timestampToSave = (oldRecord.payStatus === 'Done' && currentStatus === 'Done') ? (oldRecord.paymentTimestamp || currentTimestamp) : currentTimestamp;
+                if(currentStatus === 'Pending') timestampToSave = 'N/A';
+                if(currentStatus === 'Refunded' && oldRecord.payStatus !== 'Refunded') timestampToSave = new Date().toLocaleString('en-US', { hour12: false });
+                
+                window.salesOrders[targetIdx] = { ...oldRecord, ...newObj, paymentTimestamp: timestampToSave };
+            } else {
+                window.salesOrders.push({ id: Math.floor(100000 + Math.random() * 900000), creditPayStatus: 'Unpaid', ...newObj });
+            }
+            window.syncToFirebaseCloud();
+            closeOrderModal();
+        }
+
+        // ... (Remaining basic functions: saveExpense, saveCustomer, Settings init) ...
+        function saveExpense(e) {
+            e.preventDefault();
+            let editIdx = document.getElementById('edit-exp-index').value;
+            let expenseObj = { datetime: document.getElementById('exp-datetime').value, desc: document.getElementById('exp-desc').value, amount: document.getElementById('exp-amount').value, cat: document.getElementById('exp-cat').value };
+            if (editIdx !== "") window.expenses[Number(editIdx)] = expenseObj; else window.expenses.push(expenseObj);
+            window.syncToFirebaseCloud(); resetExpenseFormState();
+        }
+        function saveCustomer(e) {
+            e.preventDefault();
+            window.customers.push({ name: document.getElementById('cust-name').value, phone: document.getElementById('cust-phone').value, social: document.getElementById('cust-social').value || 'None', address: document.getElementById('cust-address').value });
+            window.syncToFirebaseCloud(); document.getElementById('customer-form').reset();
+        }
+        function saveSettings() {
+            window.appSettings.logo = document.getElementById('set-logo').value; window.appSettings.address = document.getElementById('set-address').value; window.appSettings.phone = document.getElementById('set-phone').value; window.appSettings.web = document.getElementById('set-web').value; window.appSettings.email = document.getElementById('set-email').value; window.appSettings.authName = document.getElementById('set-auth-name').value; window.appSettings.payInfo = document.getElementById('set-payment-info').value; window.appSettings.terms = document.getElementById('set-terms').value; window.appSettings.arrPayment = document.getElementById('set-arr-payment').value; window.appSettings.arrDelivery = document.getElementById('set-arr-delivery').value; window.appSettings.arrStatus = document.getElementById('set-arr-status').value;
+            window.syncToFirebaseCloud(); alert("Settings synced.");
+        }
+        
+        function populateDashboardFilters() {
+            let regionSelect = document.getElementById('dash-filter-region');
+            let regions = new Set();
+            window.salesOrders.forEach(so => { if(so.region) regions.add(so.region.trim()); });
+            let currentRegionVal = regionSelect.value;
+            regionSelect.innerHTML = '<option value="">All Regions</option>';
+            regions.forEach(r => regionSelect.innerHTML += `<option value="${r}">${r}</option>`);
+            regionSelect.value = currentRegionVal;
+        }
+
+        function populateDropdownSelects() {
+            const bindSelect = (id, csvString) => {
+                let select = document.getElementById(id);
+                if(!select || !csvString) return;
+                select.innerHTML = '';
+                csvString.split(',').forEach(v => select.innerHTML += `<option value="${v.trim()}">${v.trim()}</option>`);
+            };
+            bindSelect('so-pay-method', window.appSettings.arrPayment);
+            bindSelect('so-del-method', window.appSettings.arrDelivery);
+            bindSelect('so-del-status', window.appSettings.arrStatus);
+            let cSelect = document.getElementById('so-cust-select');
+            if(cSelect) {
+                cSelect.innerHTML = '<option value="">-- Guest / New --</option>';
+                window.customers.forEach(c => cSelect.innerHTML += `<option value="${c.phone}">${c.name} (${c.phone})</option>`);
             }
         }
 
-        // --- Settings & Invoice Views ---
-        let activeInvoiceIdContext = null;
-        function handleImageUpload(i, k) { let f = i.files[0]; if(!f) return; let r = new FileReader(); r.onload = function(e) { window.appSettings[k] = e.target.result; updateAppImages(); }; r.readAsDataURL(f); }
+        function initSettingsFormFields() {
+            document.getElementById('side-brand-name').innerText = window.appSettings.logo;
+            document.getElementById('set-logo').value = window.appSettings.logo; document.getElementById('set-address').value = window.appSettings.address; document.getElementById('set-phone').value = window.appSettings.phone; document.getElementById('set-web').value = window.appSettings.web; document.getElementById('set-email').value = window.appSettings.email; document.getElementById('set-auth-name').value = window.appSettings.authName; document.getElementById('set-payment-info').value = window.appSettings.payInfo; document.getElementById('set-terms').value = window.appSettings.terms; document.getElementById('set-arr-payment').value = window.appSettings.arrPayment; document.getElementById('set-arr-delivery').value = window.appSettings.arrDelivery; document.getElementById('set-arr-status').value = window.appSettings.arrStatus;
+        }
+
         function updateAppImages() {
-            let sL = document.getElementById('side-brand-logo-img'), pL = document.getElementById('preview-logo'), pS = document.getElementById('preview-sign');
-            if(window.appSettings.logoImg) { sL.src = window.appSettings.logoImg; sL.classList.remove('hidden'); pL.src = window.appSettings.logoImg; pL.classList.remove('hidden'); document.getElementById('no-logo-txt').classList.add('hidden'); }
-            if(window.appSettings.signImg) { pS.src = window.appSettings.signImg; pS.classList.remove('hidden'); document.getElementById('no-sign-txt').classList.add('hidden'); }
+            if(window.appSettings.logoImg) { document.getElementById('side-brand-logo-img').src = window.appSettings.logoImg; document.getElementById('side-brand-logo-img').classList.remove('hidden'); document.getElementById('preview-logo').src = window.appSettings.logoImg; document.getElementById('preview-logo').classList.remove('hidden'); document.getElementById('no-logo-txt').classList.add('hidden'); }
+            if(window.appSettings.signImg) { document.getElementById('preview-sign').src = window.appSettings.signImg; document.getElementById('preview-sign').classList.remove('hidden'); document.getElementById('no-sign-txt').classList.add('hidden'); }
         }
-        function initSettingsFormFields() { document.getElementById('side-brand-name').innerText = window.appSettings.logo; ['logo','address','phone','web','email','auth-name','payment-info','terms','arr-payment','arr-delivery','arr-status'].forEach(k => { let val = window.appSettings[k === 'auth-name' ? 'authName' : (k === 'payment-info' ? 'payInfo' : (k.includes('arr-') ? k.replace('-','') : k))]; if(document.getElementById(`set-${k}`)) document.getElementById(`set-${k}`).value = val; }); }
-        function saveSettings() { ['logo','address','phone','web','email','auth-name','payment-info','terms','arr-payment','arr-delivery','arr-status'].forEach(k => { window.appSettings[k === 'auth-name' ? 'authName' : (k === 'payment-info' ? 'payInfo' : (k.includes('arr-') ? k.replace('-','') : k))] = document.getElementById(`set-${k}`).value; }); window.syncToFirebaseCloud(); alert("Settings saved!"); }
+
+        function handleImageUpload(input, targetKey) {
+            const file = input.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                window.appSettings[targetKey] = e.target.result;
+                if(targetKey === 'logoImg') { document.getElementById('preview-logo').src = e.target.result; document.getElementById('preview-logo').classList.remove('hidden'); document.getElementById('no-logo-txt').classList.add('hidden'); } 
+                else if(targetKey === 'signImg') { document.getElementById('preview-sign').src = e.target.result; document.getElementById('preview-sign').classList.remove('hidden'); document.getElementById('no-sign-txt').classList.add('hidden'); }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Modal Helpers
+        function openNewOrderModal() { document.getElementById('so-form').reset(); document.getElementById('edit-so-id').value = ''; document.getElementById('edit-item-index').value = ''; document.getElementById('modal-title').innerText = "Create Sale Order"; window.globalItemsAccumulator = []; renderModalItemsTable(); document.getElementById('so-modal').classList.remove('hidden'); }
+        function closeOrderModal() { document.getElementById('so-modal').classList.add('hidden'); }
+        function toggleTrackingField(methodVal) { let container = document.getElementById('tracking-container'); if(methodVal.toLowerCase().includes('royal') || methodVal.toLowerCase().includes('express')) container.classList.remove('hidden'); else container.classList.add('hidden'); }
+        function triggerRefund() { if(!activeInvoiceIdContext) return; if(confirm("Process full refund?")) { let idx = window.salesOrders.findIndex(so => so.id == activeInvoiceIdContext); window.salesOrders[idx].payStatus = 'Refunded'; window.salesOrders[idx].paymentTimestamp = new Date().toLocaleString('en-US', { hour12: false }); window.syncToFirebaseCloud(); viewInvoice(activeInvoiceIdContext); renderSalesTable(); if(currentTab === 'dashboard') renderDashboard(); } }
+        function initiateExpenseEdit(idx) { if(prompt("Password:") === 'admin11') { let exp = window.expenses[idx]; document.getElementById('edit-exp-index').value = idx; document.getElementById('exp-datetime').value = exp.datetime; document.getElementById('exp-desc').value = exp.desc; document.getElementById('exp-amount').value = exp.amount; document.getElementById('exp-cat').value = exp.cat; document.getElementById('btn-submit-expense').innerText = "Update Record"; } }
+        function initiateExpenseDelete(idx) { if(prompt("Password:") === 'admin11' && confirm("Delete?")) { window.expenses.splice(idx, 1); window.syncToFirebaseCloud(); } }
         
-        function viewInvoice(id) {
-            let order = window.salesOrders.find(so => so.id == id); activeInvoiceIdContext = id;
-            document.getElementById('inv-header-logo').innerText = window.appSettings.logo;
-            let iL = document.getElementById('inv-logo-img'), iS = document.getElementById('inv-sign-img');
-            if(window.appSettings.logoImg) { iL.src = window.appSettings.logoImg; iL.classList.remove('hidden'); }
-            if(window.appSettings.signImg) { iS.src = window.appSettings.signImg; iS.classList.remove('hidden'); }
-            document.getElementById('inv-line-address').innerText = `Address: ${window.appSettings.address}`; document.getElementById('inv-line-phone').innerText = `Phone: ${window.appSettings.phone}`; document.getElementById('inv-line-web').innerText = `Web: ${window.appSettings.web}`; document.getElementById('inv-line-email').innerText = `Email: ${window.appSettings.email}`;
-            document.getElementById('inv-lbl-delivery-method').innerText = order.deliveryMethod || 'N/A';
-            if(order.paymentTimestamp && order.paymentTimestamp !== 'N/A') { document.getElementById('inv-lbl-payment-time-block').classList.remove('invisible'); document.getElementById('inv-lbl-payment-time').innerText = order.paymentTimestamp; } else { document.getElementById('inv-lbl-payment-time-block').classList.add('invisible'); }
-            let stampLayer = document.getElementById('invoice-stamp-layer');
-            if(order.payStatus === 'Done') { stampLayer.className = "invoice-stamp stamp-paid"; stampLayer.innerText = "PAID"; stampLayer.classList.remove('hidden'); document.getElementById('inv-title-mode').innerText = "DIGITAL INVOICE"; document.getElementById('refund-btn').classList.remove('hidden'); } else if(order.payStatus === 'Refunded') { stampLayer.className = "invoice-stamp stamp-refund"; stampLayer.innerText = "REFUNDED"; stampLayer.classList.remove('hidden'); document.getElementById('inv-title-mode').innerText = "REFUNDED INVOICE"; document.getElementById('refund-btn').classList.add('hidden'); } else { stampLayer.classList.add('hidden'); document.getElementById('inv-title-mode').innerText = "SALE ORDER"; document.getElementById('refund-btn').classList.add('hidden'); }
-            document.getElementById('inv-lbl-id').innerText = order.id; document.getElementById('inv-lbl-date').innerText = order.date; document.getElementById('inv-lbl-custname').innerText = `${order.customerName} (${order.phone}) - Target: ${order.address || order.region}`;
-            let itemTbody = document.getElementById('inv-items-body'); itemTbody.innerHTML = '';
-            (order.items || []).forEach((item, index) => { itemTbody.innerHTML += `<tr class="border-b border-gray-200 text-gray-800 text-[11px]"><td class="p-2 border-r text-center">${index + 1}</td><td class="p-2 border-r font-medium">${item.desc}</td><td class="p-2 border-r text-center">${item.qty}</td><td class="p-2 border-r text-right">${Number(item.rate).toLocaleString()}</td><td class="p-2 text-right font-semibold">${Number(item.total).toLocaleString()}</td></tr>`; });
-            document.getElementById('inv-calc-sub').innerText = `${Number(order.subtotal).toLocaleString()} MMK`; document.getElementById('inv-calc-disc').innerText = `-${Number(order.discount).toLocaleString()} MMK`; document.getElementById('inv-calc-tax').innerText = `${order.tax} %`; document.getElementById('inv-calc-total').innerText = `${Number(order.totalAmount).toLocaleString()} MMK`;
-            document.getElementById('inv-lbl-availpay').innerText = window.appSettings.payInfo; document.getElementById('inv-lbl-terms').innerText = window.appSettings.terms; document.getElementById('inv-lbl-authname').innerText = window.appSettings.authName; document.getElementById('inv-lbl-authrole').innerText = window.appSettings.authRole;
-            document.getElementById('qr-verify-target').innerHTML = ''; new QRCode(document.getElementById('qr-verify-target'), { text: `${window.appSettings.web}/verify?id=${order.id}`, width: 70, height: 70 });
-            let trackingBlock = document.getElementById('qr-tracking-block');
-            if(order.trackingLink) { trackingBlock.classList.remove('hidden'); document.getElementById('tracking-title-lbl').innerText = `${order.deliveryMethod} Tracking`; document.getElementById('qr-tracking-target').innerHTML = ''; new QRCode(document.getElementById('qr-tracking-target'), { text: order.trackingLink, width: 70, height: 70 }); } else { trackingBlock.classList.add('hidden'); }
-            document.getElementById('invoice-modal').classList.remove('hidden');
+        // Item Helpers
+        function addItemToGrid() {
+            let desc = document.getElementById('item-desc').value; let qty = Number(document.getElementById('item-qty').value); let cost = Number(document.getElementById('item-cost').value); let rate = Number(document.getElementById('item-rate').value); let editIndex = document.getElementById('edit-item-index').value;
+            if(!desc || qty <= 0 || rate <= 0) return alert("Fill valid product data.");
+            let itemObj = { desc, qty, cost, rate, total: qty * rate };
+            if (editIndex !== "") { window.globalItemsAccumulator[Number(editIndex)] = itemObj; document.getElementById('edit-item-index').value = ""; document.getElementById('btn-add-item').innerText = "+ Add Item Line"; } else { window.globalItemsAccumulator.push(itemObj); }
+            document.getElementById('item-desc').value = ''; document.getElementById('item-qty').value = ''; document.getElementById('item-cost').value = ''; document.getElementById('item-rate').value = ''; renderModalItemsTable();
         }
-        function triggerRefund() { if(!activeInvoiceIdContext) return; if(confirm("Are you sure?")) { let idx = window.salesOrders.findIndex(so => so.id == activeInvoiceIdContext); window.salesOrders[idx].payStatus = 'Refunded'; window.salesOrders[idx].paymentTimestamp = new Date().toLocaleString('en-US', { hour12: false }); window.syncToFirebaseCloud(); viewInvoice(activeInvoiceIdContext); } }
-        function closeInvoiceModal() { document.getElementById('invoice-modal').classList.add('hidden'); }
+        function renderModalItemsTable() {
+            let tbody = document.getElementById('modal-items-tbody'); tbody.innerHTML = '';
+            if (window.globalItemsAccumulator.length === 0) return tbody.innerHTML = `<tr><td colspan="6" class="p-3 text-center text-gray-400 italic">No items added.</td></tr>`;
+            window.globalItemsAccumulator.forEach((item, index) => { tbody.innerHTML += `<tr class="hover:bg-gray-50"><td class="p-2">${item.desc}</td><td class="p-2 text-center">${item.qty}</td><td class="p-2 text-right">${Number(item.cost || 0).toLocaleString()}</td><td class="p-2 text-right">${item.rate.toLocaleString()}</td><td class="p-2 text-right font-semibold">${item.total.toLocaleString()}</td><td class="p-2 text-center"><button type="button" onclick="loadItemToInputs(${index})" class="text-blue-600 font-bold px-1">Edit</button><button type="button" onclick="removeItemFromGrid(${index})" class="text-red-500 font-bold px-1">Del</button></td></tr>`; });
+        }
+        function loadItemToInputs(index) { let item = window.globalItemsAccumulator[index]; document.getElementById('item-desc').value = item.desc; document.getElementById('item-qty').value = item.qty; document.getElementById('item-cost').value = item.cost || 0; document.getElementById('item-rate').value = item.rate; document.getElementById('edit-item-index').value = index; document.getElementById('btn-add-item').innerText = "Update Item"; }
+        function removeItemFromGrid(index) { window.globalItemsAccumulator.splice(index, 1); renderModalItemsTable(); }
     </script>
 </body>
 </html>
