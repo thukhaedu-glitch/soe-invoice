@@ -4,95 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Business Management System (Firebase Auth & Real Cloud)</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     
     <style>
-        /* ADVANCED PRINT & PDF EXPORT STYLING */
-     @media print {
-
-        html, body {
-            width: 210mm;
-            height: 297mm;
-            margin: 0;
-            padding: 0;
-            background: white !important;
-        }
-
-        body * {
-            visibility: hidden !important;
-        }
-
-        #invoice-print-area,
-        #invoice-print-area * {
-            visibility: visible !important;
-        }
-
-        #invoice-modal {
-            position: absolute !important;
-            inset: 0 !important;
-            display: block !important;
-            background: white !important;
-            overflow: visible !important;
-            box-shadow: none !important;
-            padding: 0 !important;
-            margin: 0 !important;
-        }
-
-        #invoice-print-area {
-            position: relative !important;
-            width: 100% !important;
-            max-width: 100% !important;
-            margin: 0 auto !important;
-            padding: 15mm !important;
-            box-sizing: border-box !important;
-            background: white !important;
-            box-shadow: none !important;
-            overflow: visible !important;
-        }
-
-        .no-print {
-            display: none !important;
-        }
-
-        @page {
-            size: A4;
-            margin: 10mm;
-        }
-        #invoice-print-area {
-            page-break-before: avoid !important;
-            break-before: avoid !important;
-        }
-
+    /* ADVANCED PRINT & PDF EXPORT STYLING */
+    @media print {
+        html, body { width: 210mm; height: 297mm; margin: 0; padding: 0; background: white !important; }
+        body * { visibility: hidden !important; }
+        #invoice-print-area, #invoice-print-area * { visibility: visible !important; }
+        #invoice-modal { position: absolute !important; inset: 0 !important; display: block !important; background: white !important; overflow: visible !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; }
+        #invoice-print-area { position: relative !important; width: 100% !important; max-width: 100% !important; margin: 0 auto !important; padding: 15mm !important; box-sizing: border-box !important; background: white !important; box-shadow: none !important; overflow: visible !important; }
+        .no-print { display: none !important; }
+        @page { size: A4; margin: 10mm; }
+        #invoice-print-area { page-break-before: avoid !important; break-before: avoid !important; }
     }
-
-    /* Web UI မှာတော့ ပုံမှန်အတိုင်းပဲ */
-    #invoice-print-area {
-        background: white;
-        padding: 20px;
-    }
-        /* Paid / Refunded Stamp Styling */
-        .invoice-stamp {
-            position: absolute;
-            top: 15%;
-            left: 50%;
-            transform: translate(-50%, -50%) rotate(-12deg);
-            border: 4px dashed;
-            text-transform: uppercase;
-            font-size: 2rem;
-            font-weight: 900;
-            padding: 0.5rem 1.5rem;
-            border-radius: 0.5rem;
-            opacity: 0.25;
-            letter-spacing: 0.2rem;
-            pointer-events: none;
-        }
-        .stamp-paid { color: #16a34a; border-color: #16a34a; }
-        .stamp-refund { color: #dc2626; border-color: #dc2626; }
+    #invoice-print-area { background: white; padding: 20px; }
+    
+    /* Paid / Refunded Stamp Styling */
+    .invoice-stamp { position: absolute; top: 15%; left: 50%; transform: translate(-50%, -50%) rotate(-12deg); border: 4px dashed; text-transform: uppercase; font-size: 2rem; font-weight: 900; padding: 0.5rem 1.5rem; border-radius: 0.5rem; opacity: 0.25; letter-spacing: 0.2rem; pointer-events: none; }
+    .stamp-paid { color: #16a34a; border-color: #16a34a; }
+    .stamp-refund { color: #dc2626; border-color: #dc2626; }
+    
+    /* Sortable Header Cursor */
+    .sortable-header { cursor: pointer; user-select: none; }
+    .sortable-header:hover { background-color: #f3f4f6; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
 
+    <!-- Auth Screen -->
     <div id="auth-lock-screen" class="fixed inset-0 bg-slate-900 z-[9999] flex items-center justify-center p-4">
         <div class="bg-white/10 backdrop-blur-md border border-white/20 p-8 rounded-2xl max-w-sm w-full space-y-6 shadow-2xl text-center">
             <div class="space-y-2">
@@ -115,12 +56,14 @@
                     Sign In to Cloud Identity
                 </button>
             </form>
-            <div class="text-[10px] text-slate-500 font-mono">v2.0.0 - Secured by Firebase Live Auth</div>
+            <div class="text-[10px] text-slate-500 font-mono">v2.1.0 - Secured by Firebase Live Auth</div>
         </div>
     </div>
 
-
+    <!-- Main Workspace -->
     <div id="app-workspace-root" class="flex h-screen overflow-hidden hidden">
+        
+        <!-- Sidebar -->
         <div class="w-64 bg-slate-900 text-white p-5 flex flex-col justify-between no-print">
             <div>
                 <h1 class="text-xl font-bold mb-8 flex flex-col items-center gap-2 text-center">
@@ -133,7 +76,7 @@
                     <button onclick="switchTab('sales', this)" class="tab-btn w-full text-left py-2.5 px-4 rounded hover:bg-slate-800 transition">Sale Orders</button>
                     <button onclick="switchTab('purchases', this)" class="tab-btn w-full text-left py-2.5 px-4 rounded hover:bg-slate-800 transition">Purchases & Expenses</button>
                     <button onclick="switchTab('customers', this)" class="tab-btn w-full text-left py-2.5 px-4 rounded hover:bg-slate-800 transition">Customers</button>
-                    <button onclick="switchTab('reports', this)" class="tab-btn w-full text-left py-2.5 px-4 rounded hover:bg-slate-800 transition">Reports</button>
+                    <button onclick="switchTab('credit', this)" class="tab-btn w-full text-left py-2.5 px-4 rounded hover:bg-slate-800 transition">Credit Payments</button>
                     <button onclick="switchTab('settings', this)" class="tab-btn w-full text-left py-2.5 px-4 rounded hover:bg-slate-800 transition">Settings</button>
                 </nav>
             </div>
@@ -143,11 +86,11 @@
                     Logout (အကောင့်ထွက်ရန်)
                 </button>
                 <div class="text-xs text-slate-400 text-center">
-                    v2.0.0 - Firebase Production Hub
+                    v2.1.0 - Firebase Production Hub
                 </div>
             </div>
         </div>
-
+        
         <div class="flex-1 flex flex-col overflow-y-auto">
             
             <header class="bg-white border-b border-gray-200 px-8 py-4 flex justify-between items-center shadow-sm no-print">
@@ -158,30 +101,27 @@
             </header>
 
             <main class="p-8 flex-1 no-print">
-
+                <!-- Dashboard Tab -->
                 <div id="tab-dashboard" class="tab-content space-y-6">
                     <div class="bg-white p-4 rounded-xl shadow-xs border border-gray-100 flex flex-wrap gap-4 items-center">
                         <span class="text-sm font-bold text-gray-700">Filters:</span>
                         <div>
                             <select id="dash-filter-month" onchange="renderDashboard()" class="p-2 border border-gray-300 rounded-lg text-sm">
                                 <option value="">All Months</option>
-                                <option value="01">January</option>
-                                <option value="02">February</option>
-                                <option value="03">March</option>
-                                <option value="04">April</option>
-                                <option value="05">May</option>
-                                <option value="06">June</option>
-                                <option value="07">July</option>
-                                <option value="08">August</option>
-                                <option value="09">September</option>
-                                <option value="10">October</option>
-                                <option value="11">November</option>
-                                <option value="12">December</option>
+                                <option value="01">January</option><option value="02">February</option><option value="03">March</option>
+                                <option value="04">April</option><option value="05">May</option><option value="06">June</option>
+                                <option value="07">July</option><option value="08">August</option><option value="09">September</option>
+                                <option value="10">October</option><option value="11">November</option><option value="12">December</option>
                             </select>
                         </div>
                         <div>
                             <select id="dash-filter-region" onchange="renderDashboard()" class="p-2 border border-gray-300 rounded-lg text-sm">
                                 <option value="">All Regions</option>
+                            </select>
+                        </div>
+                        <div>
+                            <select id="dash-filter-payment" onchange="renderDashboard()" class="p-2 border border-gray-300 rounded-lg text-sm">
+                                <option value="">All Payment Methods</option>
                             </select>
                         </div>
                     </div>
@@ -192,16 +132,16 @@
                             <h3 id="dash-revenue" class="text-lg font-bold mt-1 text-blue-600">0 MMK</h3>
                         </div>
                         <div class="bg-white p-4 rounded-xl shadow-xs border border-gray-100">
-                            <p class="text-xs text-gray-500 font-medium">Total Expenses</p>
+                            <p class="text-xs text-gray-500 font-medium" title="Cost of Goods Sold from Orders">Total Cost (COGS)</p>
+                            <h3 id="dash-cost" class="text-lg font-bold mt-1 text-orange-500">0 MMK</h3>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl shadow-xs border border-gray-100 cursor-pointer hover:shadow-md transition" onclick="showExpenseBreakdown()">
+                            <p class="text-xs text-gray-500 font-medium" title="Total Cost + All Purchase/Expenses (Click for detail)">Total Expenses 🔍</p>
                             <h3 id="dash-expenses" class="text-lg font-bold mt-1 text-red-500">0 MMK</h3>
                         </div>
                         <div class="bg-white p-4 rounded-xl shadow-xs border border-gray-100">
-                            <p class="text-xs text-gray-500 font-medium">Net Profit Amount</p>
+                            <p class="text-xs text-gray-500 font-medium" title="Revenue - Total Expenses">Net Profit Amount</p>
                             <h3 id="dash-margin" class="text-lg font-bold mt-1 text-green-600">0 MMK</h3>
-                        </div>
-                        <div class="bg-white p-4 rounded-xl shadow-xs border border-gray-100">
-                            <p class="text-xs text-gray-500 font-medium">Overall Net Margin</p>
-                            <h3 id="dash-overall-margin-pct" class="text-lg font-bold mt-1 text-cyan-600">0%</h3>
                         </div>
                         <div class="bg-white p-4 rounded-xl shadow-xs border border-gray-100">
                             <p class="text-xs text-gray-500 font-medium">Total Orders</p>
@@ -209,7 +149,7 @@
                         </div>
                         <div class="bg-white p-4 rounded-xl shadow-xs border border-gray-100">
                             <p class="text-xs text-gray-500 font-medium">Refund Orders</p>
-                            <h3 id="dash-refunds" class="text-lg font-bold mt-1 text-orange-600">0</h3>
+                            <h3 id="dash-refunds" class="text-lg font-bold mt-1 text-pink-600">0</h3>
                         </div>
                     </div>
 
@@ -219,10 +159,11 @@
                             <table class="w-full text-left border-collapse">
                                 <thead>
                                     <tr class="bg-gray-50 border-b border-gray-200 text-gray-600 text-sm font-semibold">
-                                        <th class="p-3">Date</th>
-                                        <th class="p-3">Region</th>
-                                        <th class="p-3">Payment Method</th>
-                                        <th class="p-3">Amount</th>
+                                        <th class="p-3 sortable-header" onclick="sortDashboardTable('id')">SO ID <span id="dash-sort-id"></span></th>
+                                        <th class="p-3 sortable-header" onclick="sortDashboardTable('date')">Date <span id="dash-sort-date"></span></th>
+                                        <th class="p-3 sortable-header" onclick="sortDashboardTable('region')">Region <span id="dash-sort-region"></span></th>
+                                        <th class="p-3 sortable-header" onclick="sortDashboardTable('paymentMethod')">Payment Method <span id="dash-sort-paymentMethod"></span></th>
+                                        <th class="p-3 sortable-header" onclick="sortDashboardTable('totalAmount')">Amount <span id="dash-sort-totalAmount"></span></th>
                                         <th class="p-3">Actual Profit Margin (%)</th>
                                     </tr>
                                 </thead>
@@ -232,35 +173,49 @@
                     </div>
                 </div>
 
+                <!-- Internal Cards Tab -->
                 <div id="tab-internal-cards" class="tab-content hidden space-y-6">
                     <div class="bg-white p-6 rounded-xl shadow-xs border border-gray-100">
-                        <div class="flex justify-between items-center mb-6">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                             <div>
                                 <h3 class="text-xl font-bold text-slate-800">Internal Team Work Cards</h3>
                                 <p class="text-xs text-gray-500 mt-1">Production and operations verification workspace dashboard</p>
                             </div>
-                            <input type="text" id="card-search" oninput="renderInternalCards()" placeholder="Search Name or Phone in Cards..." class="p-2 border border-gray-300 rounded-lg text-sm w-64 focus:outline-blue-500">
+                            <div class="flex gap-2 w-full md:w-auto">
+                                <input type="text" id="card-search" oninput="renderInternalCards()" placeholder="Search Name or Phone..." class="p-2 border border-gray-300 rounded-lg text-sm focus:outline-blue-500">
+                                <select id="card-filter-status" onchange="renderInternalCards()" class="p-2 border border-gray-300 rounded-lg text-sm">
+                                    <option value="">All Delivery Status</option>
+                                </select>
+                                <select id="card-sort-date" onchange="renderInternalCards()" class="p-2 border border-gray-300 rounded-lg text-sm bg-gray-50">
+                                    <option value="desc">Newest First</option>
+                                    <option value="asc">Oldest First</option>
+                                </select>
+                            </div>
                         </div>
                         <div id="internal-cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
                     </div>
                 </div>
 
+                <!-- Sales Tab -->
                 <div id="tab-sales" class="tab-content hidden space-y-6">
                     <div class="flex justify-between items-center">
-                        <div class="flex gap-3 w-2/3">
-                            <input type="text" id="so-search" oninput="filterSales()" placeholder="Search Name or Phone..." class="w-1/2 p-2 border border-gray-300 rounded-lg text-sm focus:outline-blue-500">
+                        <div class="flex gap-3 w-3/4">
+                            <input type="text" id="so-search" oninput="filterSales()" placeholder="Search Name, Phone, or SO ID..." class="w-1/3 p-2 border border-gray-300 rounded-lg text-sm focus:outline-blue-500">
                             <select id="so-filter-payment" onchange="filterSales()" class="p-2 border border-gray-300 rounded-lg text-sm">
                                 <option value="">All Payments</option>
                                 <option value="Pending">Pending</option>
                                 <option value="Done">Done</option>
                                 <option value="Refunded">Refunded</option>
                             </select>
+                            <select id="so-filter-delivery" onchange="filterSales()" class="p-2 border border-gray-300 rounded-lg text-sm">
+                                <option value="">All Delivery Status</option>
+                            </select>
                         </div>
                         <button onclick="openNewOrderModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1">
                             + Create Sale Order
                         </button>
                     </div>
-
+                    
                     <div class="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden">
                         <table class="w-full text-left border-collapse">
                             <thead>
@@ -279,6 +234,7 @@
                     </div>
                 </div>
 
+                <!-- Purchases Tab -->
                 <div id="tab-purchases" class="tab-content hidden space-y-6">
                     <form id="expense-form" onsubmit="saveExpense(event)" class="bg-white p-6 rounded-xl shadow-xs border border-gray-100 grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
                         <input type="hidden" id="edit-exp-index" value="">
@@ -300,6 +256,7 @@
                                 <option value="Product Purchase">Product Purchase (Stock In)</option>
                                 <option value="Marketing">Marketing & PR</option>
                                 <option value="Operations">Operations / Logistics</option>
+                                <option value="Other">Other Expenses</option>
                             </select>
                         </div>
                         <button type="submit" id="btn-submit-expense" class="bg-slate-900 text-white p-2 rounded-lg font-semibold text-sm hover:bg-slate-800">Add Record</button>
@@ -313,28 +270,22 @@
                                 <option value="Product Purchase">Product Purchase (Stock In)</option>
                                 <option value="Marketing">Marketing & PR</option>
                                 <option value="Operations">Operations / Logistics</option>
+                                <option value="Other">Other Expenses</option>
                             </select>
                         </div>
                         <div>
                             <select id="pur-filter-month" onchange="renderExpensesTable()" class="p-2 border border-gray-300 rounded-lg text-sm">
                                 <option value="">All Months</option>
-                                <option value="01">January</option>
-                                <option value="02">February</option>
-                                <option value="03">March</option>
-                                <option value="04">April</option>
-                                <option value="05">May</option>
-                                <option value="06">June</option>
-                                <option value="07">July</option>
-                                <option value="08">August</option>
-                                <option value="09">September</option>
-                                <option value="10">October</option>
-                                <option value="11">November</option>
-                                <option value="12">December</option>
+                                <option value="01">January</option><option value="02">February</option><option value="03">March</option>
+                                <option value="04">April</option><option value="05">May</option><option value="06">June</option>
+                                <option value="07">July</option><option value="08">August</option><option value="09">September</option>
+                                <option value="10">October</option><option value="11">November</option><option value="12">December</option>
                             </select>
                         </div>
                         <div>
                             <select id="pur-filter-year" onchange="renderExpensesTable()" class="p-2 border border-gray-300 rounded-lg text-sm">
                                 <option value="">All Years</option>
+                                <option value="2024">2024</option>
                                 <option value="2025">2025</option>
                                 <option value="2026">2026</option>
                                 <option value="2027">2027</option>
@@ -346,10 +297,10 @@
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="bg-gray-50 border-b border-gray-200 text-gray-600 text-sm font-semibold">
-                                    <th class="p-3">Date & Time</th>
-                                    <th class="p-3">Description</th>
-                                    <th class="p-3">Category</th>
-                                    <th class="p-3">Amount</th>
+                                    <th class="p-3 sortable-header" onclick="sortExpenseTable('datetime')">Date & Time <span id="exp-sort-datetime"></span></th>
+                                    <th class="p-3 sortable-header" onclick="sortExpenseTable('desc')">Description <span id="exp-sort-desc"></span></th>
+                                    <th class="p-3 sortable-header" onclick="sortExpenseTable('cat')">Category <span id="exp-sort-cat"></span></th>
+                                    <th class="p-3 sortable-header" onclick="sortExpenseTable('amount')">Amount <span id="exp-sort-amount"></span></th>
                                     <th class="p-3 text-right">Actions</th>
                                 </tr>
                             </thead>
@@ -358,6 +309,7 @@
                     </div>
                 </div>
 
+                <!-- Customers Tab -->
                 <div id="tab-customers" class="tab-content hidden space-y-6">
                     <form id="customer-form" onsubmit="saveCustomer(event)" class="bg-white p-6 rounded-xl shadow-xs border border-gray-100 grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
                         <div>
@@ -378,6 +330,10 @@
                         </div>
                         <button type="submit" class="bg-blue-600 text-white p-2 rounded-lg font-semibold text-sm hover:bg-blue-700">Add Customer</button>
                     </form>
+                    
+                    <div class="flex justify-between items-center">
+                        <input type="text" id="cust-search" oninput="renderCustomersTable()" placeholder="Search Name or Phone..." class="w-1/3 p-2 border border-gray-300 rounded-lg text-sm focus:outline-blue-500">
+                    </div>
 
                     <div class="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden">
                         <table class="w-full text-left border-collapse">
@@ -387,6 +343,7 @@
                                     <th class="p-3">Phone</th>
                                     <th class="p-3">Address</th>
                                     <th class="p-3">Social Link</th>
+                                    <th class="p-3 text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="customer-table-body" class="divide-y divide-gray-100 text-sm"></tbody>
@@ -394,22 +351,51 @@
                     </div>
                 </div>
 
-                <div id="tab-reports" class="tab-content hidden space-y-6">
+                <!-- Credit Payments Tab -->
+                <div id="tab-credit" class="tab-content hidden space-y-6">
                     <div class="bg-white p-6 rounded-xl shadow-xs border border-gray-100 space-y-4">
-                        <h3 class="text-xl font-bold">Inventory & Financial Statement (COGS)</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="border border-gray-200 p-4 rounded-lg">
-                                <h4 class="font-semibold text-gray-700 mb-2">In/Out Stock Valuation</h4>
-                                <p class="text-sm text-gray-600">Total Stock Value Transacted (In Purchases Tab): <span id="report-stock-in" class="font-bold">0 MMK</span></p>
+                        <h3 class="text-xl font-bold">Credit Payments & Payables</h3>
+                        <p class="text-sm text-gray-500 mb-4">Manage amounts owed based on Sale Order Cost Prices.</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div class="bg-green-50 border border-green-200 p-4 rounded-xl">
+                                <p class="text-xs font-bold text-green-600 uppercase tracking-wider mb-1">Paid Amounts (ပေးပြီး)</p>
+                                <h3 id="credit-total-paid" class="text-2xl font-black text-green-800">0 MMK</h3>
                             </div>
-                            <div class="border border-gray-200 p-4 rounded-lg">
-                                <h4 class="font-semibold text-gray-700 mb-2">Cost of Goods Sold (COGS)</h4>
-                                <p class="text-sm text-gray-600">Total Operational Cost Basis: <span id="report-cogs" class="font-bold text-red-600">0 MMK</span></p>
+                            <div class="bg-red-50 border border-red-200 p-4 rounded-xl">
+                                <p class="text-xs font-bold text-red-600 uppercase tracking-wider mb-1">Unpaid Amounts (ပေးရန်ကျန်)</p>
+                                <h3 id="credit-total-unpaid" class="text-2xl font-black text-red-800">0 MMK</h3>
                             </div>
+                        </div>
+
+                        <div class="flex gap-4 mb-4">
+                            <select id="credit-filter-status" onchange="renderCreditTable()" class="p-2 border border-gray-300 rounded-lg text-sm">
+                                <option value="">All Status</option>
+                                <option value="Unpaid">Unpaid</option>
+                                <option value="Paid">Paid</option>
+                            </select>
+                        </div>
+
+                        <div class="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-gray-50 border-b border-gray-200 text-gray-600 text-sm font-semibold">
+                                        <th class="p-3">SO ID</th>
+                                        <th class="p-3">Date</th>
+                                        <th class="p-3">Customer</th>
+                                        <th class="p-3 text-right">Total Sale</th>
+                                        <th class="p-3 text-right text-orange-600">Credit Owed (Cost)</th>
+                                        <th class="p-3 text-center">Status</th>
+                                        <th class="p-3 text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="credit-table-body" class="divide-y divide-gray-100 text-sm"></tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
 
+                <!-- Settings Tab -->
                 <div id="tab-settings" class="tab-content hidden space-y-6">
                     <div class="bg-white p-6 rounded-xl shadow-xs border border-gray-100 space-y-4">
                         <h3 class="text-lg font-bold border-b pb-2">Invoice & Global Settings</h3>
@@ -434,33 +420,15 @@
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-600 mb-1">Brand Name / Logo Text</label>
-                                <input type="text" id="set-logo" class="w-full p-2 border border-gray-300 rounded-lg text-sm">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-600 mb-1">Our Address</label>
-                                <input type="text" id="set-address" class="w-full p-2 border border-gray-300 rounded-lg text-sm">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-600 mb-1">Phone No</label>
-                                <input type="text" id="set-phone" class="w-full p-2 border border-gray-300 rounded-lg text-sm">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-600 mb-1">Website</label>
-                                <input type="text" id="set-web" class="w-full p-2 border border-gray-300 rounded-lg text-sm">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-600 mb-1">Email</label>
-                                <input type="email" id="set-email" class="w-full p-2 border border-gray-300 rounded-lg text-sm">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-600 mb-1">Authorized Signatory Name</label>
-                                <input type="text" id="set-auth-name" class="w-full p-2 border border-gray-300 rounded-lg text-sm">
-                            </div>
+                            <div><label class="block text-xs font-semibold text-gray-600 mb-1">Brand Name</label><input type="text" id="set-logo" class="w-full p-2 border border-gray-300 rounded-lg text-sm"></div>
+                            <div><label class="block text-xs font-semibold text-gray-600 mb-1">Address</label><input type="text" id="set-address" class="w-full p-2 border border-gray-300 rounded-lg text-sm"></div>
+                            <div><label class="block text-xs font-semibold text-gray-600 mb-1">Phone No</label><input type="text" id="set-phone" class="w-full p-2 border border-gray-300 rounded-lg text-sm"></div>
+                            <div><label class="block text-xs font-semibold text-gray-600 mb-1">Website</label><input type="text" id="set-web" class="w-full p-2 border border-gray-300 rounded-lg text-sm"></div>
+                            <div><label class="block text-xs font-semibold text-gray-600 mb-1">Email</label><input type="email" id="set-email" class="w-full p-2 border border-gray-300 rounded-lg text-sm"></div>
+                            <div><label class="block text-xs font-semibold text-gray-600 mb-1">Auth Name</label><input type="text" id="set-auth-name" class="w-full p-2 border border-gray-300 rounded-lg text-sm"></div>
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-gray-600 mb-1">Available Payment Info</label>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Payment Info</label>
                             <textarea id="set-payment-info" rows="2" class="w-full p-2 border border-gray-300 rounded-lg text-sm"></textarea>
                         </div>
                         <div>
@@ -468,18 +436,9 @@
                             <textarea id="set-terms" rows="2" class="w-full p-2 border border-gray-300 rounded-lg text-sm"></textarea>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-600 mb-1">Payment Methods (Comma Separated)</label>
-                                <input type="text" id="set-arr-payment" class="w-full p-2 border border-gray-300 rounded-lg text-sm">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-600 mb-1">Delivery Methods (Comma Separated)</label>
-                                <input type="text" id="set-arr-delivery" class="w-full p-2 border border-gray-300 rounded-lg text-sm">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-600 mb-1">Delivery Status Options (Comma Separated)</label>
-                                <input type="text" id="set-arr-status" class="w-full p-2 border border-gray-300 rounded-lg text-sm">
-                            </div>
+                            <div><label class="block text-xs font-semibold text-gray-600 mb-1">Payment Methods (CSV)</label><input type="text" id="set-arr-payment" class="w-full p-2 border border-gray-300 rounded-lg text-sm"></div>
+                            <div><label class="block text-xs font-semibold text-gray-600 mb-1">Delivery Methods (CSV)</label><input type="text" id="set-arr-delivery" class="w-full p-2 border border-gray-300 rounded-lg text-sm"></div>
+                            <div><label class="block text-xs font-semibold text-gray-600 mb-1">Delivery Status (CSV)</label><input type="text" id="set-arr-status" class="w-full p-2 border border-gray-300 rounded-lg text-sm"></div>
                         </div>
                         <button onclick="saveSettings()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700">Save Configuration</button>
                     </div>
@@ -488,6 +447,8 @@
         </div>
     </div>
 
+    <!-- Modals -->
+    <!-- Zoom Card Modal -->
     <div id="zoom-card-modal" class="fixed inset-0 bg-slate-900/80 z-50 hidden flex items-center justify-center p-4 no-print">
         <div class="bg-white rounded-2xl max-w-2xl w-full p-8 space-y-6 shadow-2xl border-t-8 border-blue-600">
             <div class="flex justify-between items-center border-b pb-4">
@@ -522,6 +483,7 @@
         </div>
     </div>
 
+    <!-- Sale Order Modal -->
     <div id="so-modal" class="fixed inset-0 bg-black/50 z-40 hidden flex items-center justify-center p-4 overflow-y-auto no-print">
         <div class="bg-white rounded-xl max-w-4xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b pb-2">
@@ -586,7 +548,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-2 mb-2">
                         <input type="text" id="item-desc" placeholder="Item Description" class="p-2 border border-gray-300 rounded-lg text-sm md:col-span-1">
                         <input type="number" id="item-qty" placeholder="Qty" class="p-2 border border-gray-300 rounded-lg text-sm">
-                        <input type="number" id="item-cost" placeholder="Actual Cost" class="p-2 border border-gray-300 rounded-lg text-sm">
+                        <input type="number" id="item-cost" placeholder="Actual Cost (Credit Base)" class="p-2 border border-gray-300 rounded-lg text-sm">
                         <input type="number" id="item-rate" placeholder="Sale Price" class="p-2 border border-gray-300 rounded-lg text-sm">
                     </div>
                     <button type="button" id="btn-add-item" onclick="addItemToGrid()" class="bg-slate-900 text-white text-xs px-4 py-2 rounded font-medium hover:bg-slate-800">+ Add / Update Item</button>
@@ -632,11 +594,95 @@
         </div>
     </div>
 
+    <!-- Quick Payment Update Modal -->
+    <div id="quick-payment-modal" class="fixed inset-0 bg-black/50 z-[60] hidden flex items-center justify-center p-4 no-print">
+        <div class="bg-white rounded-xl max-w-sm w-full p-6 space-y-4">
+            <h3 class="text-lg font-bold border-b pb-2">Update Payment Status</h3>
+            <input type="hidden" id="quick-so-id">
+            <div>
+                <label class="block text-sm font-semibold text-gray-600 mb-2">Select New Status:</label>
+                <select id="quick-so-status" class="w-full p-2 border border-gray-300 rounded-lg text-sm">
+                    <option value="Pending">Pending</option>
+                    <option value="Done">Done</option>
+                    <option value="Refunded">Refunded</option>
+                </select>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="document.getElementById('quick-payment-modal').classList.add('hidden')" class="px-4 py-2 border rounded-lg text-sm">Cancel</button>
+                <button onclick="saveQuickPayment()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold">Update</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Delivery Update Modal -->
+    <div id="quick-delivery-modal" class="fixed inset-0 bg-black/50 z-[60] hidden flex items-center justify-center p-4 no-print">
+        <div class="bg-white rounded-xl max-w-sm w-full p-6 space-y-4">
+            <h3 class="text-lg font-bold border-b pb-2">Update Delivery Status</h3>
+            <input type="hidden" id="quick-del-so-id">
+            <div>
+                <label class="block text-sm font-semibold text-gray-600 mb-2">Select New Status:</label>
+                <select id="quick-del-status" class="w-full p-2 border border-gray-300 rounded-lg text-sm">
+                </select>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="document.getElementById('quick-delivery-modal').classList.add('hidden')" class="px-4 py-2 border rounded-lg text-sm">Cancel</button>
+                <button onclick="saveQuickDelivery()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold">Update</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expense Breakdown Modal -->
+    <div id="expense-breakdown-modal" class="fixed inset-0 bg-black/50 z-[60] hidden flex items-center justify-center p-4 no-print">
+        <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 class="text-lg font-bold">Total Expenses Breakdown</h3>
+                <button onclick="document.getElementById('expense-breakdown-modal').classList.add('hidden')" class="text-gray-500 text-xl font-bold">&times;</button>
+            </div>
+            <div id="expense-breakdown-content" class="space-y-3">
+                <!-- Populated dynamically -->
+            </div>
+            <div class="flex justify-end pt-2">
+                <button onclick="document.getElementById('expense-breakdown-modal').classList.add('hidden')" class="w-full bg-slate-900 text-white py-2 rounded-lg text-sm font-bold">Close Details</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Details Modal -->
+    <div id="customer-detail-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4 overflow-y-auto no-print">
+        <div class="bg-white rounded-xl max-w-3xl w-full p-6 space-y-4">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 class="text-xl font-bold">Customer Details</h3>
+                <button onclick="document.getElementById('customer-detail-modal').classList.add('hidden')" class="text-gray-500 text-xl font-bold">&times;</button>
+            </div>
+            <div class="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
+                <div><span class="text-xs text-gray-500 block">Name</span><span id="cd-name" class="font-bold"></span></div>
+                <div><span class="text-xs text-gray-500 block">Phone</span><span id="cd-phone" class="font-bold"></span></div>
+                <div><span class="text-xs text-gray-500 block">Address</span><span id="cd-address" class="font-semibold"></span></div>
+                <div><span class="text-xs text-gray-500 block">Social</span><a id="cd-social" href="#" target="_blank" class="text-blue-600 underline">Link</a></div>
+            </div>
+            <div>
+                <h4 class="font-bold text-gray-700 mb-2">Order History</h4>
+                <div class="max-h-60 overflow-y-auto border rounded-lg">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-gray-100 border-b sticky top-0">
+                            <tr>
+                                <th class="p-2">SO ID</th>
+                                <th class="p-2">Date</th>
+                                <th class="p-2">Total Amount</th>
+                                <th class="p-2">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cd-history-body" class="divide-y divide-gray-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invoice Print Modal -->
     <div id="invoice-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white max-w-4xl w-full p-8 space-y-6 rounded-lg shadow-2xl relative">
-            
             <div id="invoice-stamp-layer" class="invoice-stamp hidden">Paid</div>
-
             <div class="flex justify-between items-center no-print border-b pb-4">
                 <div class="flex gap-2">
                     <button onclick="window.print()" class="bg-blue-600 text-white px-5 py-2.5 rounded-lg text-xs font-bold shadow-md hover:bg-blue-700 transition">Print / Export PDF</button>
@@ -645,17 +691,17 @@
                 <button onclick="closeInvoiceModal()" class="text-gray-500 text-2xl font-bold">&times;</button>
             </div>
 
+            <!-- Invoice Area -->
             <div id="invoice-print-area" class="p-4 bg-white text-black font-sans text-sm">
+                <!-- Keep existing invoice template here -->
                 <div class="grid grid-cols-2 gap-4 border-b pb-4 mb-4 items-start">
                     <div class="flex items-start gap-4">
-                        <img id="inv-logo-img" src="" class="w-16 h-16 object-contain bg-white  p-1 hidden" alt="Logo">
+                        <img id="inv-logo-img" src="" class="w-16 h-16 object-contain bg-white p-1 hidden" alt="Logo">
                         <div>
                             <h1 id="inv-header-logo" class="text-2xl font-black uppercase tracking-tight text-gray-900">LOGO</h1>
                             <div class="mt-2 space-y-0.5 text-gray-600 font-medium text-[11px]" id="inv-header-contacts-box">
-                                 <div id="inv-line-address"></div>
-                                 <div id="inv-line-phone"></div>
-                                 <div id="inv-line-web"></div>
-                                 <div id="inv-line-email"></div>
+                                 <div id="inv-line-address"></div><div id="inv-line-phone"></div>
+                                 <div id="inv-line-web"></div><div id="inv-line-email"></div>
                             </div>
                         </div>
                     </div>
@@ -668,7 +714,6 @@
                         <p class="font-medium">Customer: <span id="inv-lbl-custname" class="font-bold"></span></p>
                     </div>
                 </div>
-
                 <table class="w-full text-left border-collapse border border-gray-300 mb-6">
                     <thead>
                         <tr class="bg-gray-100 border-b border-gray-300 text-gray-700 uppercase font-bold text-[10px]">
@@ -681,17 +726,10 @@
                     </thead>
                     <tbody id="inv-items-body" class="divide-y divide-gray-200"></tbody>
                 </table>
-
                 <div class="grid grid-cols-2 gap-4 items-start pt-2">
                     <div class="space-y-4">
-                        <div>
-                            <p class="font-bold border-b pb-1 mb-1 text-gray-800">Payment Information</p>
-                            <p id="inv-lbl-availpay" class="text-gray-600 whitespace-pre-line"></p>
-                        </div>
-                        <div>
-                            <p class="font-bold border-b pb-1 mb-1 text-gray-800">Terms & Conditions</p>
-                            <p id="inv-lbl-terms" class="text-gray-600 whitespace-pre-line"></p>
-                        </div>
+                        <div><p class="font-bold border-b pb-1 mb-1 text-gray-800">Payment Information</p><p id="inv-lbl-availpay" class="text-gray-600 whitespace-pre-line"></p></div>
+                        <div><p class="font-bold border-b pb-1 mb-1 text-gray-800">Terms & Conditions</p><p id="inv-lbl-terms" class="text-gray-600 whitespace-pre-line"></p></div>
                     </div>
                     <div class="ml-auto w-2/3 space-y-1.5 text-right font-medium text-gray-700">
                         <div class="flex justify-between"><span>Sub Total:</span><span id="inv-calc-sub">0</span></div>
@@ -702,18 +740,11 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="grid grid-cols-2 gap-4 mt-8 pt-6 border-t border-dashed border-gray-300">
                     <div class="flex flex-col justify-end">
                          <div class="flex gap-6 items-center">
-                              <div>
-                                  <p class="text-[10px] font-bold text-gray-500 mb-1 uppercase tracking-wider">Verification Link</p>
-                                  <div id="qr-verify-target" class="p-1 border bg-white inline-block"></div>
-                              </div>
-                              <div id="qr-tracking-block" class="hidden">
-                                  <p class="text-[10px] font-bold text-gray-500 mb-1 uppercase tracking-wider" id="tracking-title-lbl">Tracking Link</p>
-                                  <div id="qr-tracking-target" class="p-1 border bg-white inline-block"></div>
-                              </div>
+                              <div><p class="text-[10px] font-bold text-gray-500 mb-1 uppercase tracking-wider">Verification Link</p><div id="qr-verify-target" class="p-1 border bg-white inline-block"></div></div>
+                              <div id="qr-tracking-block" class="hidden"><p class="text-[10px] font-bold text-gray-500 mb-1 uppercase tracking-wider" id="tracking-title-lbl">Tracking Link</p><div id="qr-tracking-target" class="p-1 border bg-white inline-block"></div></div>
                          </div>
                     </div>
                     <div class="text-right space-y-1 flex flex-col items-end justify-end">
@@ -731,10 +762,8 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-        // Import Firebase Auth SDK Modules
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // Firebase Project Credentials
         const firebaseConfig = {
             apiKey: "AIzaSyBGi0N0skBofv1qKALCt1ELiRC6U1t9D7w",
             authDomain: "soepapad-8c3bb.firebaseapp.com",
@@ -744,19 +773,17 @@
             appId: "1:486653505706:web:955c89170c2a8ebfd460d3"
         };
 
-        // Initialize Realtime Instances
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const auth = getAuth(app);
 
-        // Global Matrix Variables
         window.salesOrders = [];
         window.expenses = [];
         window.customers = [];
         window.globalItemsAccumulator = [];
         window.appSettings = {};
 
-        // --- BIND LIVE AUTHENTICATION TRIGGERS ---
+        // Login Logic
         const loginForm = document.getElementById('firebase-login-form');
         if(loginForm) {
             loginForm.addEventListener('submit', (e) => {
@@ -764,16 +791,9 @@
                 const email = document.getElementById('auth-email-input').value;
                 const password = document.getElementById('auth-password-input').value;
                 const errorMsg = document.getElementById('auth-error-msg');
-
                 signInWithEmailAndPassword(auth, email, password)
-                    .then((userCredential) => {
-                        errorMsg.classList.add('hidden');
-                        loginForm.reset();
-                    })
-                    .catch((error) => {
-                        console.error("Auth Error:", error.message);
-                        errorMsg.classList.remove('hidden');
-                    });
+                    .then(() => { errorMsg.classList.add('hidden'); loginForm.reset(); })
+                    .catch((error) => { console.error(error); errorMsg.classList.remove('hidden'); });
             });
         }
 
@@ -781,64 +801,38 @@
         if(logoutBtn) {
             logoutBtn.addEventListener('click', () => {
                 if(confirm("စနစ်ထဲမှ လုံခြုံစွာ ထွက်ခွာမှာ သေချာပါသလား?")) {
-                    signOut(auth).then(() => {
-                        location.reload();
-                    });
+                    signOut(auth).then(() => { location.reload(); });
                 }
             });
         }
 
-        // State Listener for Persistence Engine
+        // State Listener
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                // User is authenticated successfully -> Unlock Dashboard Workspace View Layer
                 document.getElementById('auth-lock-screen').classList.add('hidden');
                 document.getElementById('app-workspace-root').classList.remove('hidden');
                 
-                // Fetch data payload from Realtime Database
                 onValue(ref(db, 'business_data'), (snapshot) => {
                     const data = snapshot.val() || {};
                     window.salesOrders = data.salesOrders || [];
                     window.expenses = data.expenses || [];
                     window.customers = data.customers || [];
                     window.appSettings = data.appSettings || {
-                        logo: "Nimba Beauty Co.",
-                        address: "No. 123, Merchant Road, Yangon",
-                        phone: "+959 123 456 789",
-                        web: "https://nimba-skincare.com",
-                        email: "info@nimba-skincare.com",
-                        authName: "Nimba Operations Director",
-                        authRole: "Authorized Officer",
-                        payInfo: "KBZ Pay: 09123456789\nCB Bank via MMQR Merchant Portal",
-                        terms: "1. Goods sold are not returnable unless defective.\n2. Delivery dates are estimates provided by third-party logistics.",
-                        arrPayment: "KBZPay, CBPay, Cash",
-                        arrDelivery: "Royal Express, Express Bus, Self Pick",
-                        arrStatus: "Pending, Dispatched, Delivered",
-                        logoImg: "",
-                        signImg: ""
+                        logo: "Nimba System", address: "Yangon", phone: "09123456789", web: "", email: "", authName: "Director", authRole: "Authorized", payInfo: "KBZ Pay", terms: "", arrPayment: "KBZPay,Cash", arrDelivery: "Royal Express,Self Pick", arrStatus: "Pending,Dispatched,Delivered", logoImg: "", signImg: ""
                     };
 
                     document.getElementById('sync-badge').className = "bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full font-semibold";
                     document.getElementById('sync-badge').innerText = "Cloud Sync Active";
                     
-                    initSettingsFormFields();
-                    updateAppImages();
-                    populateDashboardFilters();
-                    renderDashboard();
-                    renderSalesTable();
-                    renderExpensesTable();
-                    renderCustomersTable();
-                    populateDropdownSelects();
+                    initSettingsFormFields(); updateAppImages(); populateDropdownSelects();
+                    renderDashboard(); renderSalesTable(); renderExpensesTable(); renderCustomersTable(); renderInternalCards(); renderCreditTable();
                 });
-
             } else {
-                // No user logged in -> Lock Workspace view context
                 document.getElementById('app-workspace-root').classList.add('hidden');
                 document.getElementById('auth-lock-screen').classList.remove('hidden');
             }
         });
 
-        // Function to push data metrics to cloud nodes
         window.syncToFirebaseCloud = function() {
             set(ref(db, 'business_data'), {
                 salesOrders: window.salesOrders,
@@ -851,113 +845,40 @@
 
     <script>
         let currentTab = 'dashboard';
+        
+        // Sorting States
+        let dashSort = { key: 'date', asc: false };
+        let expSort = { key: 'datetime', asc: false };
 
-        window.onload = function() {
-            setDefaultExpenseDateTime();
-        };
-
-        function setDefaultExpenseDateTime() {
-            const now = new Date();
-            const offset = now.getTimezoneOffset() * 60000;
-            const localISOTime = (new Date(now - offset)).toISOString().slice(0, 16);
-            if(document.getElementById('exp-datetime')) {
-                document.getElementById('exp-datetime').value = localISOTime;
-            }
-        }
+        window.onload = function() { setDefaultExpenseDateTime(); };
 
         function switchTab(tabId, element) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            const targetTab = document.getElementById(`tab-${tabId}`);
-            if(targetTab) targetTab.classList.remove('hidden');
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
             
             document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('bg-blue-600', 'font-medium');
-                btn.classList.add('hover:bg-slate-800');
+                btn.classList.remove('bg-blue-600', 'font-medium'); btn.classList.add('hover:bg-slate-800');
             });
-            
             if(element) {
-                element.classList.add('bg-blue-600', 'font-medium');
-                element.classList.remove('hover:bg-slate-800');
+                element.classList.add('bg-blue-600', 'font-medium'); element.classList.remove('hover:bg-slate-800');
             }
-            
             let displayTitle = tabId.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
             document.getElementById('page-title').innerText = displayTitle;
             currentTab = tabId;
 
-            if(tabId === 'dashboard') { renderDashboard(); }
-            if(tabId === 'internal-cards') { renderInternalCards(); }
-            if(tabId === 'purchases') { resetExpenseFormState(); }
-            if(tabId === 'reports') { renderReportsView(); }
+            if(tabId === 'dashboard') renderDashboard();
+            if(tabId === 'internal-cards') renderInternalCards();
+            if(tabId === 'purchases') { resetExpenseFormState(); renderExpensesTable(); }
+            if(tabId === 'sales') renderSalesTable();
+            if(tabId === 'customers') renderCustomersTable();
+            if(tabId === 'credit') renderCreditTable();
         }
 
-        function handleImageUpload(input, targetKey) {
-            const file = input.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                window.appSettings[targetKey] = e.target.result;
-                if(targetKey === 'logoImg') {
-                    const img = document.getElementById('preview-logo');
-                    img.src = e.target.result; img.classList.remove('hidden');
-                    document.getElementById('no-logo-txt').classList.add('hidden');
-                } else if(targetKey === 'signImg') {
-                    const img = document.getElementById('preview-sign');
-                    img.src = e.target.result; img.classList.remove('hidden');
-                    document.getElementById('no-sign-txt').classList.add('hidden');
-                }
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function updateAppImages() {
-            const sideLogo = document.getElementById('side-brand-logo-img');
-            if(window.appSettings.logoImg) {
-                sideLogo.src = window.appSettings.logoImg;
-                sideLogo.classList.remove('hidden');
-            } else { sideLogo.classList.add('hidden'); }
-
-            if(window.appSettings.logoImg) {
-                const img = document.getElementById('preview-logo');
-                img.src = window.appSettings.logoImg; img.classList.remove('hidden');
-                document.getElementById('no-logo-txt').classList.add('hidden');
-            }
-            if(window.appSettings.signImg) {
-                const img = document.getElementById('preview-sign');
-                img.src = window.appSettings.signImg; img.classList.remove('hidden');
-                document.getElementById('no-sign-txt').classList.add('hidden');
-            }
-        }
-
-        function initSettingsFormFields() {
-            document.getElementById('side-brand-name').innerText = window.appSettings.logo;
-            document.getElementById('set-logo').value = window.appSettings.logo;
-            document.getElementById('set-address').value = window.appSettings.address;
-            document.getElementById('set-phone').value = window.appSettings.phone;
-            document.getElementById('set-web').value = window.appSettings.web;
-            document.getElementById('set-email').value = window.appSettings.email;
-            document.getElementById('set-auth-name').value = window.appSettings.authName;
-            document.getElementById('set-payment-info').value = window.appSettings.payInfo;
-            document.getElementById('set-terms').value = window.appSettings.terms;
-            document.getElementById('set-arr-payment').value = window.appSettings.arrPayment;
-            document.getElementById('set-arr-delivery').value = window.appSettings.arrDelivery;
-            document.getElementById('set-arr-status').value = window.appSettings.arrStatus;
-        }
-
-        function saveSettings() {
-            window.appSettings.logo = document.getElementById('set-logo').value;
-            window.appSettings.address = document.getElementById('set-address').value;
-            window.appSettings.phone = document.getElementById('set-phone').value;
-            window.appSettings.web = document.getElementById('set-web').value;
-            window.appSettings.email = document.getElementById('set-email').value;
-            window.appSettings.authName = document.getElementById('set-auth-name').value;
-            window.appSettings.payInfo = document.getElementById('set-payment-info').value;
-            window.appSettings.terms = document.getElementById('set-terms').value;
-            window.appSettings.arrPayment = document.getElementById('set-arr-payment').value;
-            window.appSettings.arrDelivery = document.getElementById('set-arr-delivery').value;
-            window.appSettings.arrStatus = document.getElementById('set-arr-status').value;
-
-            window.syncToFirebaseCloud();
-            alert("Configuration settings synchronized directly inside Cloud Node cluster!");
+        // --- Utils ---
+        function setDefaultExpenseDateTime() {
+            const now = new Date(); const offset = now.getTimezoneOffset() * 60000;
+            const localISOTime = (new Date(now - offset)).toISOString().slice(0, 16);
+            if(document.getElementById('exp-datetime')) document.getElementById('exp-datetime').value = localISOTime;
         }
 
         function populateDropdownSelects() {
@@ -966,792 +887,602 @@
                 if(!select || !csvString) return;
                 select.innerHTML = '';
                 csvString.split(',').forEach(v => {
-                    let opt = document.createElement('option');
-                    opt.value = v.trim(); opt.innerText = v.trim();
-                    select.appendChild(opt);
+                    select.innerHTML += `<option value="${v.trim()}">${v.trim()}</option>`;
                 });
             };
-
             bindSelect('so-pay-method', window.appSettings.arrPayment);
             bindSelect('so-del-method', window.appSettings.arrDelivery);
             bindSelect('so-del-status', window.appSettings.arrStatus);
+            
+            // Populate Filters
+            bindSelect('card-filter-status', "All Delivery Status," + window.appSettings.arrStatus);
+            document.getElementById('card-filter-status').options[0].value = "";
+            bindSelect('so-filter-delivery', "All Delivery Status," + window.appSettings.arrStatus);
+            document.getElementById('so-filter-delivery').options[0].value = "";
+            
+            // Populate Dashboard payment filter based on settings
+            bindSelect('dash-filter-payment', "All Payment Methods," + window.appSettings.arrPayment);
+            document.getElementById('dash-filter-payment').options[0].value = "";
 
             let cSelect = document.getElementById('so-cust-select');
             if(cSelect) {
-                cSelect.innerHTML = '<option value="">-- Choose Registered Profile --</option>';
+                cSelect.innerHTML = '<option value="">-- Choose Profile --</option>';
                 window.customers.forEach(c => {
-                    let opt = document.createElement('option');
-                    opt.value = c.phone; opt.innerText = `${c.name} (${c.phone})`;
-                    cSelect.appendChild(opt);
+                    cSelect.innerHTML += `<option value="${c.phone}">${c.name} (${c.phone})</option>`;
                 });
             }
-        }
 
-        function populateDashboardFilters() {
-            let regionSelect = document.getElementById('dash-filter-region');
-            if(!regionSelect) return;
-            let currentRegionVal = regionSelect.value;
+            // Dashboard Region filter
+            let rSelect = document.getElementById('dash-filter-region');
             let regions = new Set();
             window.salesOrders.forEach(so => { if(so.region) regions.add(so.region.trim()); });
-            
-            regionSelect.innerHTML = '<option value="">All Regions</option>';
-            regions.forEach(r => {
-                let opt = document.createElement('option');
-                opt.value = r; opt.innerText = r;
-                regionSelect.appendChild(opt);
-            });
-            regionSelect.value = currentRegionVal;
+            rSelect.innerHTML = '<option value="">All Regions</option>';
+            regions.forEach(r => { rSelect.innerHTML += `<option value="${r}">${r}</option>`; });
+        }
+
+        // --- Dashboard Logic ---
+        function sortDashboardTable(key) {
+            if(dashSort.key === key) dashSort.asc = !dashSort.asc;
+            else { dashSort.key = key; dashSort.asc = true; }
+            renderDashboard();
         }
 
         function renderDashboard() {
-            let selectedMonth = document.getElementById('dash-filter-month').value;
-            let selectedRegion = document.getElementById('dash-filter-region').value;
-            let revenue = 0, totalCostOfGoods = 0, totalOrders = 0, refundOrders = 0;
-            let dTable = document.getElementById('dash-table-body');
-            if(!dTable) return;
-            dTable.innerHTML = '';
+            let month = document.getElementById('dash-filter-month').value;
+            let region = document.getElementById('dash-filter-region').value;
+            let payment = document.getElementById('dash-filter-payment').value;
+            
+            let revenue = 0, cogsCost = 0, otherExpenses = 0, totalOrders = 0, refundOrders = 0;
+            let expBreakdown = { cogs: 0, categories: {} }; // For the breakdown modal
+            
+            let tbody = document.getElementById('dash-table-body');
+            tbody.innerHTML = '';
+
+            // Update Sort Icons
+            ['id', 'date', 'region', 'paymentMethod', 'totalAmount'].forEach(k => {
+                let el = document.getElementById(`dash-sort-${k}`);
+                if(el) el.innerText = dashSort.key === k ? (dashSort.asc ? '▲' : '▼') : '';
+            });
+
+            // Calculate other expenses (from purchases tab) matching month
+            window.expenses.forEach(exp => {
+                let expMonth = exp.datetime ? exp.datetime.split('T')[0].split('-')[1] : '';
+                if(!month || expMonth === month) {
+                    let amt = Number(exp.amount || 0);
+                    otherExpenses += amt;
+                    expBreakdown.categories[exp.cat] = (expBreakdown.categories[exp.cat] || 0) + amt;
+                }
+            });
 
             let filteredSales = window.salesOrders.filter(so => {
-                let matchMonth = true;
-                if(selectedMonth) {
-                    let soMonth = so.date ? so.date.split('-')[1] : '';
-                    matchMonth = (soMonth === selectedMonth);
-                }
-                let matchRegion = selectedRegion ? (so.region === selectedRegion) : true;
-                return matchMonth && matchRegion;
+                let mMatch = month ? (so.date && so.date.split('-')[1] === month) : true;
+                let rMatch = region ? (so.region === region) : true;
+                let pMatch = payment ? (so.paymentMethod === payment) : true;
+                return mMatch && rMatch && pMatch;
+            });
+
+            // Apply Sort
+            filteredSales.sort((a, b) => {
+                let valA = a[dashSort.key]; let valB = b[dashSort.key];
+                if(dashSort.key === 'totalAmount' || dashSort.key === 'id') { valA = Number(valA); valB = Number(valB); }
+                if(valA < valB) return dashSort.asc ? -1 : 1;
+                if(valA > valB) return dashSort.asc ? 1 : -1;
+                return 0;
             });
 
             filteredSales.forEach(so => {
                 totalOrders++;
                 if(so.payStatus === 'Refunded') refundOrders++;
                 
-                let totalRowCost = 0;
-                let totalRowSale = 0;
-                if (so.items) {
-                    so.items.forEach(item => {
-                        totalRowCost += (Number(item.cost || 0) * Number(item.qty || 0));
-                        totalRowSale += (Number(item.rate || 0) * Number(item.qty || 0));
-                    });
-                }
+                let rowCost = 0, rowSale = 0;
+                (so.items || []).forEach(i => {
+                    rowCost += (Number(i.cost || 0) * Number(i.qty || 0));
+                    rowSale += (Number(i.rate || 0) * Number(i.qty || 0));
+                });
 
                 if(so.payStatus === 'Done') {
                     revenue += Number(so.totalAmount);
-                    totalCostOfGoods += totalRowCost;
+                    cogsCost += rowCost;
                 }
+
+                let marginPct = rowSale > 0 ? (1 - (rowCost / rowSale)) * 100 : 0;
                 
-                let itemMarginPct = totalRowSale > 0 ? (1 - (totalRowCost / totalRowSale)) * 100 : 0;
-                
-                let tr = document.createElement('tr');
-                tr.className = "hover:bg-gray-50 border-b border-gray-100";
-                tr.innerHTML = `
-                    <td class="p-3 font-medium">${so.date}</td>
-                    <td class="p-3 text-gray-600">${so.region}</td>
-                    <td class="p-3"><span class="bg-gray-100 px-2 py-0.5 rounded text-xs">${so.paymentMethod}</span></td>
-                    <td class="p-3 font-bold">${Number(so.totalAmount).toLocaleString()} MMK</td>
-                    <td class="p-3 text-cyan-600 font-semibold">${itemMarginPct.toFixed(1)}%</td>
-                `;
-                dTable.appendChild(tr);
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-50 border-b border-gray-100">
+                        <td class="p-3 font-bold"><a href="#" onclick="viewInvoice(${so.id}); return false;" class="text-blue-600 hover:underline">#${so.id}</a></td>
+                        <td class="p-3 font-medium">${so.date}</td>
+                        <td class="p-3 text-gray-600">${so.region}</td>
+                        <td class="p-3"><span class="bg-gray-100 px-2 py-0.5 rounded text-xs">${so.paymentMethod}</span></td>
+                        <td class="p-3 font-bold">${Number(so.totalAmount).toLocaleString()} MMK</td>
+                        <td class="p-3 text-cyan-600 font-semibold">${marginPct.toFixed(1)}%</td>
+                    </tr>`;
             });
 
-            let netProfitAmount = revenue - totalCostOfGoods;
-            let overallNetMarginPct = revenue > 0 ? (netProfitAmount / revenue) * 100 : 0;
+            let totalAbsoluteExpenses = cogsCost + otherExpenses;
+            let netProfit = revenue - totalAbsoluteExpenses;
+            
+            expBreakdown.cogs = cogsCost;
+            window.currentDashStats = expBreakdown; // Save to memory for modal popup
 
             document.getElementById('dash-revenue').innerText = `${revenue.toLocaleString()} MMK`;
-            document.getElementById('dash-expenses').innerText = `${totalCostOfGoods.toLocaleString()} MMK`;
-            document.getElementById('dash-margin').innerText = `${netProfitAmount.toLocaleString()} MMK`;
-            document.getElementById('dash-overall-margin-pct').innerText = `${overallNetMarginPct.toFixed(1)}%`;
+            document.getElementById('dash-cost').innerText = `${cogsCost.toLocaleString()} MMK`;
+            document.getElementById('dash-expenses').innerText = `${totalAbsoluteExpenses.toLocaleString()} MMK`;
+            document.getElementById('dash-margin').innerText = `${netProfit.toLocaleString()} MMK`;
             document.getElementById('dash-orders').innerText = totalOrders;
             document.getElementById('dash-refunds').innerText = refundOrders;
         }
 
+        function showExpenseBreakdown() {
+            let stats = window.currentDashStats;
+            if(!stats) return;
+            let container = document.getElementById('expense-breakdown-content');
+            
+            container.innerHTML = `
+                <div class="flex justify-between items-center border-b border-gray-100 pb-2">
+                    <span class="font-semibold text-gray-600">Total Cost (COGS from Orders)</span>
+                    <span class="font-bold text-orange-600">${stats.cogs.toLocaleString()} MMK</span>
+                </div>
+            `;
+            let totalOther = 0;
+            for(let cat in stats.categories) {
+                let amt = stats.categories[cat];
+                totalOther += amt;
+                container.innerHTML += `
+                    <div class="flex justify-between items-center border-b border-gray-100 pb-2">
+                        <span class="font-semibold text-gray-600">${cat}</span>
+                        <span class="font-bold text-red-500">${amt.toLocaleString()} MMK</span>
+                    </div>
+                `;
+            }
+            container.innerHTML += `
+                <div class="flex justify-between items-center pt-2">
+                    <span class="font-bold text-gray-800">Total Calculation</span>
+                    <span class="font-bold text-red-600 text-lg">${(stats.cogs + totalOther).toLocaleString()} MMK</span>
+                </div>
+            `;
+            document.getElementById('expense-breakdown-modal').classList.remove('hidden');
+        }
+
+        // --- Internal Cards ---
         function renderInternalCards() {
-            let searchQuery = document.getElementById('card-search').value.toLowerCase();
-            let cardsContainer = document.getElementById('internal-cards-container');
-            if(!cardsContainer) return;
-            cardsContainer.innerHTML = '';
+            let q = document.getElementById('card-search').value.toLowerCase();
+            let sDate = document.getElementById('card-sort-date').value; // 'desc' or 'asc'
+            let dStatus = document.getElementById('card-filter-status').value;
+            let container = document.getElementById('internal-cards-container');
+            container.innerHTML = '';
 
             let matches = window.salesOrders.filter(so => {
-                return so.customerName.toLowerCase().includes(searchQuery) || so.phone.includes(searchQuery);
+                let matchSearch = so.customerName.toLowerCase().includes(q) || so.phone.includes(q);
+                let matchStatus = dStatus ? (so.deliveryStatus === dStatus) : true;
+                return matchSearch && matchStatus;
+            });
+
+            matches.sort((a, b) => {
+                let d1 = new Date(a.date), d2 = new Date(b.date);
+                return sDate === 'desc' ? d2 - d1 : d1 - d2;
             });
 
             matches.forEach(so => {
-                let itemsListHtml = '';
-                if (so.items) {
-                    so.items.forEach(item => {
-                        itemsListHtml += `<li class="flex justify-between text-xs bg-slate-100 p-1 rounded"><span>Item: ${item.desc}</span> <span class="font-bold">x ${item.qty}</span></li>`;
-                    });
-                }
+                let itemsListHtml = (so.items || []).map(i => `<li class="flex justify-between text-xs bg-slate-100 p-1 rounded"><span>${i.desc}</span> <span class="font-bold">x ${i.qty}</span></li>`).join('');
+                
+                let dBadge = so.deliveryStatus === 'Delivered' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800';
 
-                let card = document.createElement('div');
-                card.className = "bg-white p-5 rounded-xl shadow-xs border-t-4 border-slate-700 space-y-3 relative hover:shadow-md transition";
-                card.innerHTML = `
-                    <div class="flex justify-between items-start border-b pb-2">
-                        <div>
-                            <span class="text-xs font-mono font-bold text-gray-400">ID: #${so.id}</span>
-                            <h5 class="font-bold text-base text-gray-900 mt-0.5">${so.customerName}</h5>
+                container.innerHTML += `
+                    <div class="bg-white p-5 rounded-xl shadow-xs border-t-4 border-slate-700 space-y-3 relative hover:shadow-md transition">
+                        <div class="flex justify-between items-start border-b pb-2">
+                            <div>
+                                <span class="text-xs font-mono font-bold text-gray-400">#${so.id} | ${so.date}</span>
+                                <h5 class="font-bold text-base text-gray-900 mt-0.5">${so.customerName}</h5>
+                            </div>
+                            <div class="flex flex-col gap-1.5 items-end">
+                                <span class="text-[10px] px-2 py-0.5 rounded font-bold ${dBadge}">${so.deliveryStatus}</span>
+                                <div class="flex gap-1.5">
+                                    <button onclick="zoomCardProfile(${so.id})" class="text-xs bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded font-bold border">Zoom</button>
+                                </div>
+                            </div>
                         </div>
-                        <div class="flex gap-1.5">
-                            <button onclick="zoomCardProfile(${so.id})" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-800 px-2 py-1 rounded font-bold border transition">Zoom</button>
-                            <button onclick="viewInvoice(${so.id})" class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1 rounded font-medium shadow-xs transition">View</button>
+                        <div class="text-xs space-y-1.5 text-gray-700">
+                            <p><strong>Phone:</strong> ${so.phone}</p>
+                            <p><strong>Method:</strong> ${so.deliveryMethod}</p>
                         </div>
-                    </div>
-                    <div class="text-xs space-y-1.5 text-gray-700">
-                        <p><strong>Phone:</strong> ${so.phone}</p>
-                        <p><strong>Address:</strong> ${so.address || so.region}</p>
-                        <p><strong>Delivery:</strong> <span class="bg-blue-50 text-blue-800 px-1.5 py-0.5 rounded font-medium">${so.deliveryMethod}</span></p>
-                    </div>
-                    <div class="border-t pt-2">
-                        <p class="text-[11px] uppercase tracking-wider font-bold text-gray-400 mb-1">Items:</p>
-                        <ul class="space-y-1">${itemsListHtml}</ul>
-                    </div>
-                    <div class="border-t pt-2 space-y-1 bg-amber-50/50 p-2 rounded-lg border border-amber-100">
-                        <p class="text-[11px] text-amber-900 font-bold uppercase tracking-wider">Customized Instruction:</p>
-                        <p class="text-xs text-amber-950 font-medium whitespace-pre-wrap italic">${so.customInstruction || 'None'}</p>
-                    </div>
-                `;
-                cardsContainer.appendChild(card);
+                        <div class="border-t pt-2"><ul class="space-y-1">${itemsListHtml}</ul></div>
+                        ${so.customInstruction ? `<div class="border-t pt-2 bg-amber-50/50 p-2 rounded-lg border border-amber-100"><p class="text-[11px] text-amber-900 font-bold uppercase">Instruction:</p><p class="text-xs italic">${so.customInstruction}</p></div>` : ''}
+                    </div>`;
             });
         }
-
+        
         function zoomCardProfile(id) {
             let record = window.salesOrders.find(so => so.id == id);
             if (!record) return;
-
-            document.getElementById('zoom-card-id').innerText = `Order Space Matrix: #${record.id}`;
-            document.getElementById('zoom-card-name').innerText = `Name: ${record.customerName}`;
+            document.getElementById('zoom-card-id').innerText = `Order: #${record.id}`;
+            document.getElementById('zoom-card-name').innerText = record.customerName;
             document.getElementById('zoom-card-phone').innerText = record.phone;
             document.getElementById('zoom-card-address').innerText = record.address || record.region;
-            document.getElementById('zoom-card-delivery').innerText = record.deliveryMethod;
-
-            let ul = document.getElementById('zoom-card-items');
-            ul.innerHTML = '';
-            (record.items || []).forEach(item => {
-                ul.innerHTML += `<li class="flex justify-between items-center text-sm bg-blue-50/60 border border-blue-100 p-2 rounded-lg font-medium"><span>Line: ${item.desc}</span><span class="font-bold text-blue-800 text-base">x ${item.qty}</span></li>`;
-            });
-
-            document.getElementById('zoom-card-custom').innerText = record.customInstruction || 'No custom instruction parameters requested.';
-            document.getElementById('zoom-card-other').innerText = record.otherInstruction || 'No operational routing directions available.';
+            document.getElementById('zoom-card-delivery').innerText = `${record.deliveryMethod} (${record.deliveryStatus})`;
+            let ul = document.getElementById('zoom-card-items'); ul.innerHTML = '';
+            (record.items || []).forEach(i => { ul.innerHTML += `<li class="flex justify-between items-center text-sm bg-blue-50/60 border border-blue-100 p-2 rounded-lg font-medium"><span>${i.desc}</span><span class="font-bold text-blue-800 text-base">x ${i.qty}</span></li>`; });
+            document.getElementById('zoom-card-custom').innerText = record.customInstruction || 'None';
+            document.getElementById('zoom-card-other').innerText = record.otherInstruction || 'None';
             document.getElementById('zoom-card-modal').classList.remove('hidden');
         }
-
         function closeZoomModal() { document.getElementById('zoom-card-modal').classList.add('hidden'); }
 
-        function saveExpense(e) {
-            e.preventDefault();
-            let editIdx = document.getElementById('edit-exp-index').value;
-            let expenseObj = {
-                datetime: document.getElementById('exp-datetime').value,
-                desc: document.getElementById('exp-desc').value,
-                amount: document.getElementById('exp-amount').value,
-                cat: document.getElementById('exp-cat').value
-            };
-
-            if (editIdx !== "") { window.expenses[Number(editIdx)] = expenseObj; } 
-            else { window.expenses.push(expenseObj); }
-
-            window.syncToFirebaseCloud();
-            resetExpenseFormState();
-        }
-
-        function resetExpenseFormState() {
-            document.getElementById('expense-form').reset();
-            document.getElementById('edit-exp-index').value = "";
-            document.getElementById('btn-submit-expense').innerText = "Add Record";
-            setDefaultExpenseDateTime();
-        }
-
-        function initiateExpenseEdit(index) {
-            let pass = prompt("Please enter Expense Administrative Passkey:");
-            if (pass === 'admin11') {
-                let exp = window.expenses[index];
-                document.getElementById('edit-exp-index').value = index;
-                document.getElementById('exp-datetime').value = exp.datetime;
-                document.getElementById('exp-desc').value = exp.desc;
-                document.getElementById('exp-amount').value = exp.amount;
-                document.getElementById('exp-cat').value = exp.cat;
-                document.getElementById('btn-submit-expense').innerText = "Update Record";
-            } else { alert("Security credentials validation failed!"); }
-        }
-
-        function initiateExpenseDelete(index) {
-            let pass = prompt("Enter Administrative Passkey to Delete:");
-            if (pass === 'admin11') {
-                if(confirm("Are you sure?")) {
-                    window.expenses.splice(index, 1);
-                    window.syncToFirebaseCloud();
-                }
-            } else { alert("Security credentials validation failed!"); }
-        }
-
-        function renderExpensesTable() {
-            let filterCat = document.getElementById('pur-filter-cat').value;
-            let filterMonth = document.getElementById('pur-filter-month').value;
-            let filterYear = document.getElementById('pur-filter-year').value;
-            let tbody = document.getElementById('expense-table-body');
-            if(!tbody) return;
-            tbody.innerHTML = '';
+        // --- Sales Orders ---
+        function filterSales() {
+            let q = document.getElementById('so-search').value.toLowerCase();
+            let pay = document.getElementById('so-filter-payment').value;
+            let del = document.getElementById('so-filter-delivery').value;
             
-            window.expenses.forEach((exp, actualIndex) => {
-                let matchCat = filterCat === '' ? true : exp.cat === filterCat;
-                let expYear = '', expMonth = '';
-                if(exp.datetime) {
-                    let parts = exp.datetime.split('T')[0].split('-'); 
-                    expYear = parts[0]; expMonth = parts[1];
-                }
-                let matchMonth = filterMonth === '' ? true : expMonth === filterMonth;
-                let matchYear = filterYear === '' ? true : expYear === filterYear;
-
-                if (matchCat && matchMonth && matchYear) {
-                    tbody.innerHTML += `
-                        <tr class="border-b border-gray-100 hover:bg-gray-50">
-                            <td class="p-3 font-mono text-gray-600 text-xs">${exp.datetime ? exp.datetime.replace('T', ' ') : ''}</td>
-                            <td class="p-3 font-medium">${exp.desc}</td>
-                            <td class="p-3 text-gray-500">${exp.cat}</td>
-                            <td class="p-3 font-bold text-red-500">${Number(exp.amount).toLocaleString()} MMK</td>
-                            <td class="p-3 text-right space-x-2">
-                                <button onclick="initiateExpenseEdit(${actualIndex})" class="text-xs text-blue-600 font-semibold">Edit</button>
-                                <button onclick="initiateExpenseDelete(${actualIndex})" class="text-xs text-red-500 font-semibold">Delete</button>
-                            </td>
-                        </tr>`;
-                }
-            });
-        }
-
-        function saveCustomer(e) {
-            e.preventDefault();
-            window.customers.push({
-                name: document.getElementById('cust-name').value,
-                phone: document.getElementById('cust-phone').value,
-                social: document.getElementById('cust-social').value || 'None',
-                address: document.getElementById('cust-address').value
-            });
-            window.syncToFirebaseCloud();
-            document.getElementById('customer-form').reset();
-        }
-
-        function renderCustomersTable() {
-            let tbody = document.getElementById('customer-table-body');
-            if(!tbody) return;
-            tbody.innerHTML = '';
-            window.customers.forEach(c => {
-                tbody.innerHTML += `<tr class="border-b border-gray-100 hover:bg-gray-50"><td class="p-3 font-semibold">${c.name}</td><td class="p-3">${c.phone}</td><td class="p-3 text-gray-500">${c.address}</td><td class="p-3"><a href="${c.social}" target="_blank" class="text-blue-600 underline">Social Link</a></td></tr>`;
-            });
-        }
-
-        function openNewOrderModal() {
-            document.getElementById('so-form').reset();
-            document.getElementById('edit-so-id').value = '';
-            document.getElementById('edit-item-index').value = '';
-            document.getElementById('modal-title').innerText = "Create Sale Order";
-            window.globalItemsAccumulator = [];
-            renderModalItemsTable();
-            document.getElementById('so-modal').classList.remove('hidden');
-        }
-
-        function closeOrderModal() { document.getElementById('so-modal').classList.add('hidden'); }
-
-        function toggleTrackingField(methodVal) {
-            let container = document.getElementById('tracking-container');
-            if(methodVal.toLowerCase().includes('royal') || methodVal.toLowerCase().includes('express')) {
-                container.classList.remove('hidden');
-            } else { container.classList.add('hidden'); }
-        }
-
-        function addItemToGrid() {
-            let desc = document.getElementById('item-desc').value;
-            let qty = Number(document.getElementById('item-qty').value);
-            let cost = Number(document.getElementById('item-cost').value);
-            let rate = Number(document.getElementById('item-rate').value);
-            let editIndex = document.getElementById('edit-item-index').value;
-
-            if(!desc || qty <= 0 || rate <= 0) return alert("Please fill valid product item parameters.");
-
-            let itemObj = { desc, qty, cost, rate, total: qty * rate };
-
-            if (editIndex !== "") {
-                window.globalItemsAccumulator[Number(editIndex)] = itemObj;
-                document.getElementById('edit-item-index').value = "";
-                document.getElementById('btn-add-item').innerText = "+ Add Item Line";
-            } else {
-                window.globalItemsAccumulator.push(itemObj);
-            }
-            
-            document.getElementById('item-desc').value = '';
-            document.getElementById('item-qty').value = '';
-            document.getElementById('item-cost').value = '';
-            document.getElementById('item-rate').value = '';
-            renderModalItemsTable();
-        }
-
-        function renderModalItemsTable() {
-            let tbody = document.getElementById('modal-items-tbody');
-            if(!tbody) return;
-            tbody.innerHTML = '';
-            if (window.globalItemsAccumulator.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="p-3 text-center text-gray-400 italic">No items added yet.</td></tr>`;
-                return;
-            }
-
-            window.globalItemsAccumulator.forEach((item, index) => {
-                tbody.innerHTML += `
-                    <tr class="hover:bg-gray-50">
-                        <td class="p-2 font-medium">${item.desc}</td>
-                        <td class="p-2 text-center font-bold">${item.qty}</td>
-                        <td class="p-2 text-right">${Number(item.cost || 0).toLocaleString()}</td>
-                        <td class="p-2 text-right">${item.rate.toLocaleString()}</td>
-                        <td class="p-2 text-right font-semibold">${item.total.toLocaleString()} MMK</td>
-                        <td class="p-2 text-center">
-                            <button type="button" onclick="loadItemToInputs(${index})" class="text-blue-600 font-bold px-1">Edit</button>
-                            <button type="button" onclick="removeItemFromGrid(${index})" class="text-red-500 font-bold px-1">Delete</button>
-                        </td>
-                    </tr>`;
-            });
-        }
-
-        function loadItemToInputs(index) {
-            let item = window.globalItemsAccumulator[index];
-            document.getElementById('item-desc').value = item.desc;
-            document.getElementById('item-qty').value = item.qty;
-            document.getElementById('item-cost').value = item.cost || 0;
-            document.getElementById('item-rate').value = item.rate;
-            document.getElementById('edit-item-index').value = index;
-            document.getElementById('btn-add-item').innerText = "Update Item";
-        }
-
-        function removeItemFromGrid(index) {
-            window.globalItemsAccumulator.splice(index, 1);
-            renderModalItemsTable();
-        }
-
-        function processSaleOrder(e) {
-            e.preventDefault();
-            let editId = document.getElementById('edit-so-id').value;
-            let cPhone = document.getElementById('so-cust-select').value;
-            let customerObj = window.customers.find(c => c.phone === cPhone) || { name: "Guest User", phone: cPhone, address: "N/A" };
-
-            if(window.globalItemsAccumulator.length === 0) return alert("Please add at least 1 product item line.");
-
-            let subtotal = window.globalItemsAccumulator.reduce((sum, i) => sum + i.total, 0);
-            let discType = document.getElementById('so-disc-type').value;
-            let discVal = Number(document.getElementById('so-disc-val').value);
-            let finalDiscount = discType === 'fix' ? discVal : (discType === 'percent' ? (subtotal * (discVal / 100)) : 0);
-            let taxPct = Number(document.getElementById('so-tax').value);
-            let finalTotal = (subtotal - finalDiscount) + ((subtotal - finalDiscount) * (taxPct / 100));
-
-            let currentStatus = document.getElementById('so-pay-status').value;
-            let currentTimestamp = 'N/A';
-            
-            if(currentStatus === 'Done') {
-                currentTimestamp = new Date().toLocaleString('en-US', { hour12: false });
-            }
-
-            if(editId) {
-                let targetIdx = window.salesOrders.findIndex(so => so.id == editId);
-                let oldRecord = window.salesOrders[targetIdx];
+            let rows = document.querySelectorAll('#so-table-body tr');
+            rows.forEach(row => {
+                let dataAttr = row.getAttribute('data-search').toLowerCase();
+                let pStat = row.getAttribute('data-pay');
+                let dStat = row.getAttribute('data-del');
                 
-                let timestampToSave = (oldRecord.payStatus === 'Done' && currentStatus === 'Done') ? (oldRecord.paymentTimestamp || currentTimestamp) : currentTimestamp;
-                if(currentStatus === 'Pending') timestampToSave = 'N/A';
-                if(currentStatus === 'Refunded' && oldRecord.payStatus !== 'Refunded') timestampToSave = new Date().toLocaleString('en-US', { hour12: false });
-
-                window.salesOrders[targetIdx] = {
-                    ...oldRecord,
-                    customerName: customerObj.name,
-                    phone: customerObj.phone,
-                    address: customerObj.address,
-                    region: document.getElementById('so-region').value,
-                    date: document.getElementById('so-date').value,
-                    paymentMethod: document.getElementById('so-pay-method').value,
-                    payStatus: currentStatus,
-                    paymentTimestamp: timestampToSave,
-                    deliveryMethod: document.getElementById('so-del-method').value,
-                    deliveryStatus: document.getElementById('so-del-status').value,
-                    trackingLink: document.getElementById('so-tracking-link').value || '',
-                    items: window.globalItemsAccumulator,
-                    subtotal: subtotal,
-                    discount: finalDiscount,
-                    tax: taxPct,
-                    totalAmount: finalTotal,
-                    customInstruction: document.getElementById('so-custom-instruction').value,
-                    otherInstruction: document.getElementById('so-other-instruction').value
-                };
-            } else {
-                window.salesOrders.push({
-                    id: Math.floor(100000 + Math.random() * 900000),
-                    customerName: customerObj.name,
-                    phone: customerObj.phone,
-                    address: customerObj.address,
-                    region: document.getElementById('so-region').value,
-                    date: document.getElementById('so-date').value,
-                    paymentMethod: document.getElementById('so-pay-method').value,
-                    payStatus: currentStatus,
-                    paymentTimestamp: currentTimestamp,
-                    deliveryMethod: document.getElementById('so-del-method').value,
-                    deliveryStatus: document.getElementById('so-del-status').value,
-                    trackingLink: document.getElementById('so-tracking-link').value || '',
-                    items: window.globalItemsAccumulator,
-                    subtotal: subtotal,
-                    discount: finalDiscount,
-                    tax: taxPct,
-                    totalAmount: finalTotal,
-                    customInstruction: document.getElementById('so-custom-instruction').value,
-                    otherInstruction: document.getElementById('so-other-instruction').value
-                });
-            }
-
-            window.syncToFirebaseCloud();
-            closeOrderModal();
+                let mQ = dataAttr.includes(q);
+                let mP = pay ? (pStat === pay) : true;
+                let mD = del ? (dStat === del) : true;
+                
+                if(mQ && mP && mD) row.classList.remove('hidden'); else row.classList.add('hidden');
+            });
         }
 
         function renderSalesTable() {
             let tbody = document.getElementById('so-table-body');
-            if(!tbody) return;
             tbody.innerHTML = '';
-
-            window.salesOrders.forEach(so => {
+            // Render Latest First
+            let sorted = [...window.salesOrders].sort((a,b) => new Date(b.date) - new Date(a.date));
+            
+            sorted.forEach(so => {
                 let badgeClass = so.payStatus === 'Done' ? 'bg-green-100 text-green-800' : (so.payStatus === 'Refunded' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800');
+                
                 tbody.innerHTML += `
-                    <tr class="border-b border-gray-100 hover:bg-gray-50">
+                    <tr class="border-b border-gray-100 hover:bg-gray-50" data-search="${so.id} ${so.customerName} ${so.phone}" data-pay="${so.payStatus}" data-del="${so.deliveryStatus}">
                         <td class="p-3 font-bold text-blue-600">#${so.id}</td>
-                        <td class="p-3">
-                            <div class="font-semibold">${so.customerName}</div>
-                            <div class="text-xs text-gray-500">${so.phone}</div>
-                        </td>
+                        <td class="p-3"><div class="font-semibold">${so.customerName}</div><div class="text-xs text-gray-500">${so.phone}</div></td>
                         <td class="p-3 text-gray-600">${so.date}</td>
                         <td class="p-3 font-bold">${Number(so.totalAmount).toLocaleString()} MMK</td>
-                        <td class="p-3"><span class="px-2.5 py-0.5 rounded-full text-xs font-semibold ${badgeClass}">${so.payStatus}</span></td>
-                        <td class="p-3 text-xs text-gray-500">${so.deliveryMethod || 'N/A'} (${so.deliveryStatus})</td>
+                        <td class="p-3">
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold cursor-pointer hover:opacity-80 ${badgeClass}" onclick="openQuickPayment(${so.id})">${so.payStatus} ✎</span>
+                        </td>
+                        <td class="p-3 text-xs text-gray-500">${so.deliveryMethod || 'N/A'}<br>
+                            <span class="font-bold cursor-pointer text-blue-600 hover:text-blue-800" onclick="openQuickDelivery(${so.id})">${so.deliveryStatus} ✎</span>
+                        </td>
                         <td class="p-3 text-right space-x-1">
-                            <button onclick="viewInvoice(${so.id})" class="text-xs bg-slate-900 text-white px-2.5 py-1 rounded font-medium">View / Invoice</button>
-                            <button onclick="initiateSecureEditSequence(${so.id})" class="text-xs border border-gray-300 text-gray-700 px-2.5 py-1 rounded font-medium">Edit</button>
+                            <button onclick="viewInvoice(${so.id})" class="text-xs bg-slate-900 text-white px-2 py-1 rounded font-medium">View</button>
+                            <button onclick="initiateSecureEditSequence(${so.id})" class="text-xs border border-gray-300 px-2 py-1 rounded font-medium">Edit</button>
                         </td>
                     </tr>`;
             });
         }
+        
+        function openQuickPayment(id) {
+            let so = window.salesOrders.find(s => s.id == id);
+            if(!so) return;
+            document.getElementById('quick-so-id').value = id;
+            document.getElementById('quick-so-status').value = so.payStatus;
+            document.getElementById('quick-payment-modal').classList.remove('hidden');
+        }
+        function saveQuickPayment() {
+            let id = document.getElementById('quick-so-id').value;
+            let nStatus = document.getElementById('quick-so-status').value;
+            let idx = window.salesOrders.findIndex(s => s.id == id);
+            if(idx > -1) {
+                let current = window.salesOrders[idx].payStatus;
+                if(current === 'Done' && nStatus !== 'Done') {
+                    if(prompt("Enter Admin Password to change finalized payment (admin22):") !== 'admin22') {
+                        alert("Unauthorized Action!"); return;
+                    }
+                }
+                window.salesOrders[idx].payStatus = nStatus;
+                if(nStatus === 'Done' || nStatus === 'Refunded') window.salesOrders[idx].paymentTimestamp = new Date().toLocaleString('en-US', { hour12: false });
+                window.syncToFirebaseCloud();
+                renderSalesTable(); renderDashboard();
+                document.getElementById('quick-payment-modal').classList.add('hidden');
+            }
+        }
 
-        function filterSales() {
-            let query = document.getElementById('so-search').value.toLowerCase();
-            let pFilter = document.getElementById('so-filter-payment').value;
-            let rows = document.querySelectorAll('#so-table-body tr');
-            rows.forEach((row, idx) => {
-                let order = window.salesOrders[idx];
-                if(!order) return;
-                let matchesSearch = order.customerName.toLowerCase().includes(query) || order.phone.includes(query);
-                let matchesPayment = pFilter === '' ? true : order.payStatus === pFilter;
-                if(matchesSearch && matchesPayment) row.classList.remove('hidden');
-                else row.classList.add('hidden');
+        function openQuickDelivery(id) {
+            let so = window.salesOrders.find(s => s.id == id);
+            if(!so) return;
+            document.getElementById('quick-del-so-id').value = id;
+            let delSelect = document.getElementById('quick-del-status');
+            delSelect.innerHTML = '';
+            window.appSettings.arrStatus.split(',').forEach(v => {
+                delSelect.innerHTML += `<option value="${v.trim()}">${v.trim()}</option>`;
             });
+            delSelect.value = so.deliveryStatus;
+            document.getElementById('quick-delivery-modal').classList.remove('hidden');
+        }
+        function saveQuickDelivery() {
+            let id = document.getElementById('quick-del-so-id').value;
+            let nStatus = document.getElementById('quick-del-status').value;
+            let idx = window.salesOrders.findIndex(s => s.id == id);
+            if(idx > -1) {
+                let current = window.salesOrders[idx].deliveryStatus;
+                if(current.toLowerCase().includes('delivered') && nStatus !== current) {
+                    if(prompt("Enter Admin Password to change Delivered status (admin22):") !== 'admin22') {
+                        alert("Unauthorized Action!"); return;
+                    }
+                }
+                window.salesOrders[idx].deliveryStatus = nStatus;
+                window.syncToFirebaseCloud();
+                renderSalesTable();
+                document.getElementById('quick-delivery-modal').classList.add('hidden');
+            }
+        }
+
+        // Make Modal / Items Logic Available
+        function openNewOrderModal() {
+            document.getElementById('so-form').reset(); document.getElementById('edit-so-id').value = '';
+            document.getElementById('edit-item-index').value = ''; document.getElementById('modal-title').innerText = "Create Sale Order";
+            window.globalItemsAccumulator = []; renderModalItemsTable();
+            document.getElementById('so-modal').classList.remove('hidden');
+        }
+        function closeOrderModal() { document.getElementById('so-modal').classList.add('hidden'); }
+        function toggleTrackingField(v) { document.getElementById('tracking-container').className = (v.toLowerCase().includes('royal') || v.toLowerCase().includes('express')) ? '' : 'hidden'; }
+        function addItemToGrid() {
+            let desc = document.getElementById('item-desc').value, qty = Number(document.getElementById('item-qty').value), cost = Number(document.getElementById('item-cost').value), rate = Number(document.getElementById('item-rate').value), editIndex = document.getElementById('edit-item-index').value;
+            if(!desc || qty <= 0 || rate <= 0) return alert("Valid input required.");
+            let itemObj = { desc, qty, cost, rate, total: qty * rate };
+            if (editIndex !== "") { window.globalItemsAccumulator[Number(editIndex)] = itemObj; document.getElementById('edit-item-index').value = ""; document.getElementById('btn-add-item').innerText = "+ Add / Update Item"; } 
+            else window.globalItemsAccumulator.push(itemObj);
+            document.getElementById('item-desc').value = ''; document.getElementById('item-qty').value = ''; document.getElementById('item-cost').value = ''; document.getElementById('item-rate').value = '';
+            renderModalItemsTable();
+        }
+        function renderModalItemsTable() {
+            let tbody = document.getElementById('modal-items-tbody'); tbody.innerHTML = '';
+            window.globalItemsAccumulator.forEach((item, index) => {
+                tbody.innerHTML += `<tr class="hover:bg-gray-50"><td class="p-2 font-medium">${item.desc}</td><td class="p-2 text-center font-bold">${item.qty}</td><td class="p-2 text-right">${Number(item.cost || 0).toLocaleString()}</td><td class="p-2 text-right">${item.rate.toLocaleString()}</td><td class="p-2 text-right font-semibold">${item.total.toLocaleString()} MMK</td><td class="p-2 text-center"><button type="button" onclick="loadItemToInputs(${index})" class="text-blue-600 px-1">Edit</button><button type="button" onclick="removeItemFromGrid(${index})" class="text-red-500 px-1">Del</button></td></tr>`;
+            });
+        }
+        function loadItemToInputs(i) { let item = window.globalItemsAccumulator[i]; document.getElementById('item-desc').value = item.desc; document.getElementById('item-qty').value = item.qty; document.getElementById('item-cost').value = item.cost || 0; document.getElementById('item-rate').value = item.rate; document.getElementById('edit-item-index').value = i; document.getElementById('btn-add-item').innerText = "Update"; }
+        function removeItemFromGrid(i) { window.globalItemsAccumulator.splice(i, 1); renderModalItemsTable(); }
+        
+        function processSaleOrder(e) {
+            e.preventDefault();
+            let editId = document.getElementById('edit-so-id').value;
+            let cPhone = document.getElementById('so-cust-select').value;
+            let customerObj = window.customers.find(c => c.phone === cPhone) || { name: "Guest", phone: cPhone, address: "N/A" };
+            if(window.globalItemsAccumulator.length === 0) return alert("Add items!");
+            
+            let subtotal = window.globalItemsAccumulator.reduce((sum, i) => sum + i.total, 0);
+            let discType = document.getElementById('so-disc-type').value, discVal = Number(document.getElementById('so-disc-val').value);
+            let finalDiscount = discType === 'fix' ? discVal : (discType === 'percent' ? (subtotal * (discVal / 100)) : 0);
+            let taxPct = Number(document.getElementById('so-tax').value);
+            let finalTotal = (subtotal - finalDiscount) + ((subtotal - finalDiscount) * (taxPct / 100));
+            let currentStatus = document.getElementById('so-pay-status').value;
+            let tStamp = currentStatus === 'Done' ? new Date().toLocaleString('en-US', { hour12: false }) : 'N/A';
+
+            let baseData = {
+                customerName: customerObj.name, phone: customerObj.phone, address: customerObj.address,
+                region: document.getElementById('so-region').value, date: document.getElementById('so-date').value,
+                paymentMethod: document.getElementById('so-pay-method').value, payStatus: currentStatus,
+                deliveryMethod: document.getElementById('so-del-method').value, deliveryStatus: document.getElementById('so-del-status').value,
+                trackingLink: document.getElementById('so-tracking-link').value || '', items: window.globalItemsAccumulator,
+                subtotal: subtotal, discount: finalDiscount, tax: taxPct, totalAmount: finalTotal,
+                customInstruction: document.getElementById('so-custom-instruction').value, otherInstruction: document.getElementById('so-other-instruction').value,
+                creditStatus: 'Unpaid' // Default credit state
+            };
+
+            if(editId) {
+                let idx = window.salesOrders.findIndex(so => so.id == editId);
+                let old = window.salesOrders[idx];
+                baseData.paymentTimestamp = (old.payStatus === 'Done' && currentStatus === 'Done') ? old.paymentTimestamp : tStamp;
+                baseData.id = old.id; baseData.creditStatus = old.creditStatus || 'Unpaid';
+                window.salesOrders[idx] = baseData;
+            } else {
+                baseData.id = Math.floor(100000 + Math.random() * 900000);
+                baseData.paymentTimestamp = tStamp;
+                window.salesOrders.push(baseData);
+            }
+            window.syncToFirebaseCloud(); closeOrderModal();
         }
 
         function initiateSecureEditSequence(id) {
-            let pass = prompt("Enter Sale Authorization Password:");
+            let pass = prompt("Enter Password:");
             if(pass === 'admin22') {
-                let record = window.salesOrders.find(so => so.id == id);
+                let r = window.salesOrders.find(so => so.id == id);
                 openNewOrderModal();
-                document.getElementById('modal-title').innerText = `Edit Sale Order #${id}`;
-                document.getElementById('edit-so-id').value = id;
-                document.getElementById('so-cust-select').value = record.phone;
-                document.getElementById('so-region').value = record.region;
-                document.getElementById('so-date').value = record.date;
-                document.getElementById('so-pay-method').value = record.paymentMethod;
-                document.getElementById('so-pay-status').value = record.payStatus;
-                document.getElementById('so-del-method').value = record.deliveryMethod;
-                document.getElementById('so-del-status').value = record.deliveryStatus;
-                document.getElementById('so-tracking-link').value = record.trackingLink || '';
-                document.getElementById('so-custom-instruction').value = record.customInstruction || '';
-                document.getElementById('so-other-instruction').value = record.otherInstruction || '';
-                document.getElementById('so-disc-val').value = record.discount || 0;
-                document.getElementById('so-tax').value = record.tax || 0;
-
-                window.globalItemsAccumulator = JSON.parse(JSON.stringify(record.items || []));
-                renderModalItemsTable();
-            } else { alert("Security authorization challenge failed!"); }
+                document.getElementById('modal-title').innerText = `Edit SO #${id}`; document.getElementById('edit-so-id').value = id;
+                document.getElementById('so-cust-select').value = r.phone; document.getElementById('so-region').value = r.region;
+                document.getElementById('so-date').value = r.date; document.getElementById('so-pay-method').value = r.paymentMethod;
+                document.getElementById('so-pay-status').value = r.payStatus; document.getElementById('so-del-method').value = r.deliveryMethod;
+                document.getElementById('so-del-status').value = r.deliveryStatus; document.getElementById('so-tracking-link').value = r.trackingLink || '';
+                document.getElementById('so-custom-instruction').value = r.customInstruction || ''; document.getElementById('so-other-instruction').value = r.otherInstruction || '';
+                document.getElementById('so-disc-val').value = r.discount || 0; document.getElementById('so-tax').value = r.tax || 0;
+                window.globalItemsAccumulator = JSON.parse(JSON.stringify(r.items || [])); renderModalItemsTable();
+            } else alert("Failed!");
         }
 
-        let activeInvoiceIdContext = null;
-        function viewInvoice(id) {
-            let order = window.salesOrders.find(so => so.id == id);
-            activeInvoiceIdContext = id;
+        // --- Purchases Logic ---
+        function sortExpenseTable(key) {
+            if(expSort.key === key) expSort.asc = !expSort.asc;
+            else { expSort.key = key; expSort.asc = true; }
+            renderExpensesTable();
+        }
 
-            document.getElementById('inv-header-logo').innerText = window.appSettings.logo;
-            
-            const invLogoImg = document.getElementById('inv-logo-img');
-            if(window.appSettings.logoImg) {
-                invLogoImg.src = window.appSettings.logoImg; invLogoImg.classList.remove('hidden');
-            } else { invLogoImg.classList.add('hidden'); }
+        function renderExpensesTable() {
+            let cat = document.getElementById('pur-filter-cat').value;
+            let mo = document.getElementById('pur-filter-month').value;
+            let yr = document.getElementById('pur-filter-year').value;
+            let tbody = document.getElementById('expense-table-body');
+            tbody.innerHTML = '';
 
-            const invSignImg = document.getElementById('inv-sign-img');
-            if(window.appSettings.signImg) {
-                invSignImg.src = window.appSettings.signImg; invSignImg.classList.remove('hidden');
-            } else { invSignImg.classList.add('hidden'); }
-            
-            document.getElementById('inv-line-address').innerText = `Address: ${window.appSettings.address}`;
-            document.getElementById('inv-line-phone').innerText = `Phone: ${window.appSettings.phone}`;
-            document.getElementById('inv-line-web').innerText = `Web: ${window.appSettings.web}`;
-            document.getElementById('inv-line-email').innerText = `Email: ${window.appSettings.email}`;
-            
-            document.getElementById('inv-lbl-delivery-method').innerText = order.deliveryMethod || 'N/A';
-
-            if(order.paymentTimestamp && order.paymentTimestamp !== 'N/A') {
-                document.getElementById('inv-lbl-payment-time-block').classList.remove('invisible');
-                document.getElementById('inv-lbl-payment-time').innerText = order.paymentTimestamp;
-            } else {
-                document.getElementById('inv-lbl-payment-time-block').classList.add('invisible');
-                document.getElementById('inv-lbl-payment-time').innerText = 'N/A';
-            }
-
-            let stampLayer = document.getElementById('invoice-stamp-layer');
-            if(order.payStatus === 'Done') {
-                stampLayer.className = "invoice-stamp stamp-paid";
-                stampLayer.innerText = "PAID";
-                stampLayer.classList.remove('hidden');
-                document.getElementById('inv-title-mode').innerText = "DIGITAL INVOICE";
-                document.getElementById('refund-btn').classList.remove('hidden');
-            } else if(order.payStatus === 'Refunded') {
-                stampLayer.className = "invoice-stamp stamp-refund";
-                stampLayer.innerText = "REFUNDED";
-                stampLayer.classList.remove('hidden');
-                document.getElementById('inv-title-mode').innerText = "REFUNDED INVOICE";
-                document.getElementById('refund-btn').classList.add('hidden');
-            } else {
-                stampLayer.classList.add('hidden');
-                document.getElementById('inv-title-mode').innerText = "SALE ORDER";
-                document.getElementById('refund-btn').classList.add('hidden');
-            }
-
-            document.getElementById('inv-lbl-id').innerText = order.id;
-            document.getElementById('inv-lbl-date').innerText = order.date;
-            document.getElementById('inv-lbl-custname').innerText = `${order.customerName} (${order.phone}) - Target: ${order.address || order.region}`;
-
-            let itemTbody = document.getElementById('inv-items-body');
-            itemTbody.innerHTML = '';
-            (order.items || []).forEach((item, index) => {
-                itemTbody.innerHTML += `
-                    <tr class="border-b border-gray-200 text-gray-800 text-[11px]">
-                        <td class="p-2 border-r border-gray-300 text-center">${index + 1}</td>
-                        <td class="p-2 border-r border-gray-300 font-medium">${item.desc}</td>
-                        <td class="p-2 border-r border-gray-300 text-center">${item.qty}</td>
-                        <td class="p-2 border-r border-gray-300 text-right">${Number(item.rate).toLocaleString()}</td>
-                        <td class="p-2 text-right font-semibold">${Number(item.total).toLocaleString()}</td>
-                    </tr>`;
+            ['datetime', 'desc', 'cat', 'amount'].forEach(k => {
+                document.getElementById(`exp-sort-${k}`).innerText = expSort.key === k ? (expSort.asc ? '▲' : '▼') : '';
             });
 
-            document.getElementById('inv-calc-sub').innerText = `${Number(order.subtotal).toLocaleString()} MMK`;
-            document.getElementById('inv-calc-disc').innerText = `-${Number(order.discount).toLocaleString()} MMK`;
-            document.getElementById('inv-calc-tax').innerText = `${order.tax} %`;
-            document.getElementById('inv-calc-total').innerText = `${Number(order.totalAmount).toLocaleString()} MMK`;
+            let filtered = window.expenses.filter(e => {
+                let mCat = cat ? e.cat === cat : true;
+                let dt = e.datetime ? e.datetime.split('T')[0].split('-') : [];
+                let mYr = yr ? dt[0] === yr : true;
+                let mMo = mo ? dt[1] === mo : true;
+                return mCat && mYr && mMo;
+            });
 
-            document.getElementById('inv-lbl-availpay').innerText = window.appSettings.payInfo;
-            document.getElementById('inv-lbl-terms').innerText = window.appSettings.terms;
-            document.getElementById('inv-lbl-authname').innerText = window.appSettings.authName;
-            document.getElementById('inv-lbl-authrole').innerText = window.appSettings.authRole;
+            filtered.sort((a,b) => {
+                let valA = a[expSort.key]; let valB = b[expSort.key];
+                if(expSort.key === 'amount') { valA = Number(valA); valB = Number(valB); }
+                if(valA < valB) return expSort.asc ? -1 : 1;
+                if(valA > valB) return expSort.asc ? 1 : -1;
+                return 0;
+            });
 
-            document.getElementById('qr-verify-target').innerHTML = '';
-            new QRCode(document.getElementById('qr-verify-target'), { text: `${window.appSettings.web}/verify?id=${order.id}`, width: 70, height: 70 });
+            filtered.forEach(exp => {
+                let originalIndex = window.expenses.indexOf(exp); // For exact edit/del referencing
+                tbody.innerHTML += `
+                    <tr class="border-b border-gray-100 hover:bg-gray-50">
+                        <td class="p-3 font-mono text-gray-600 text-xs">${exp.datetime ? exp.datetime.replace('T', ' ') : ''}</td>
+                        <td class="p-3 font-medium">${exp.desc}</td>
+                        <td class="p-3 text-gray-500">${exp.cat}</td>
+                        <td class="p-3 font-bold text-red-500">${Number(exp.amount).toLocaleString()} MMK</td>
+                        <td class="p-3 text-right space-x-2">
+                            <button onclick="initiateExpenseEdit(${originalIndex})" class="text-xs text-blue-600 font-semibold">Edit</button>
+                            <button onclick="initiateExpenseDelete(${originalIndex})" class="text-xs text-red-500 font-semibold">Del</button>
+                        </td>
+                    </tr>`;
+            });
+        }
+        function saveExpense(e) {
+            e.preventDefault();
+            let idx = document.getElementById('edit-exp-index').value;
+            let obj = { datetime: document.getElementById('exp-datetime').value, desc: document.getElementById('exp-desc').value, amount: document.getElementById('exp-amount').value, cat: document.getElementById('exp-cat').value };
+            if(idx !== "") window.expenses[Number(idx)] = obj; else window.expenses.push(obj);
+            window.syncToFirebaseCloud(); resetExpenseFormState(); renderExpensesTable();
+        }
+        function resetExpenseFormState() { document.getElementById('expense-form').reset(); document.getElementById('edit-exp-index').value = ""; document.getElementById('btn-submit-expense').innerText = "Add Record"; setDefaultExpenseDateTime(); }
+        function initiateExpenseEdit(i) {
+            if (prompt("Passkey:") === 'admin11') {
+                let e = window.expenses[i]; document.getElementById('edit-exp-index').value = i;
+                document.getElementById('exp-datetime').value = e.datetime; document.getElementById('exp-desc').value = e.desc;
+                document.getElementById('exp-amount').value = e.amount; document.getElementById('exp-cat').value = e.cat; document.getElementById('btn-submit-expense').innerText = "Update";
+            }
+        }
+        function initiateExpenseDelete(i) { if(prompt("Passkey:") === 'admin11' && confirm("Sure?")) { window.expenses.splice(i,1); window.syncToFirebaseCloud(); renderExpensesTable(); } }
 
+        // --- Customers ---
+        function saveCustomer(e) { e.preventDefault(); window.customers.push({ name: document.getElementById('cust-name').value, phone: document.getElementById('cust-phone').value, social: document.getElementById('cust-social').value || '#', address: document.getElementById('cust-address').value }); window.syncToFirebaseCloud(); document.getElementById('customer-form').reset(); }
+        function renderCustomersTable() {
+            let q = document.getElementById('cust-search').value.toLowerCase();
+            let tbody = document.getElementById('customer-table-body'); tbody.innerHTML = '';
+            
+            let filtered = window.customers.filter(c => c.name.toLowerCase().includes(q) || c.phone.includes(q));
+            
+            filtered.forEach(c => {
+                tbody.innerHTML += `<tr class="border-b border-gray-100 hover:bg-gray-50"><td class="p-3 font-semibold">${c.name}</td><td class="p-3">${c.phone}</td><td class="p-3 text-gray-500">${c.address}</td><td class="p-3"><a href="${c.social}" target="_blank" class="text-blue-600 underline">Social</a></td><td class="p-3 text-right"><button onclick="viewCustomerDetails('${c.phone}')" class="bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs px-3 py-1 rounded font-bold">Details</button></td></tr>`;
+            });
+        }
+        function viewCustomerDetails(phone) {
+            let c = window.customers.find(x => x.phone === phone);
+            if(!c) return;
+            document.getElementById('cd-name').innerText = c.name; document.getElementById('cd-phone').innerText = c.phone;
+            document.getElementById('cd-address').innerText = c.address; document.getElementById('cd-social').href = c.social;
+            
+            let hBody = document.getElementById('cd-history-body'); hBody.innerHTML = '';
+            let history = window.salesOrders.filter(so => so.phone === phone);
+            
+            if(history.length === 0) { hBody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-400">No orders found.</td></tr>'; } 
+            else {
+                history.forEach(h => {
+                    hBody.innerHTML += `<tr class="hover:bg-gray-50"><td class="p-2 font-bold text-blue-600">#${h.id}</td><td class="p-2">${h.date}</td><td class="p-2 font-semibold">${Number(h.totalAmount).toLocaleString()}</td><td class="p-2">${h.payStatus}</td></tr>`;
+                });
+            }
+            document.getElementById('customer-detail-modal').classList.remove('hidden');
+        }
+
+        // --- Credit Payment Logic ---
+        function renderCreditTable() {
+            let filter = document.getElementById('credit-filter-status').value;
+            let tbody = document.getElementById('credit-table-body');
+            tbody.innerHTML = '';
+            
+            let totalPaidAmount = 0;
+            let totalUnpaidAmount = 0;
+
+            window.salesOrders.forEach(so => {
+                // Calculate Total Cost (Credit Owed)
+                let totalCost = (so.items || []).reduce((sum, item) => sum + (Number(item.cost || 0) * Number(item.qty || 0)), 0);
+                if(totalCost <= 0) return; // Skip orders with 0 cost
+
+                let status = so.creditStatus || 'Unpaid';
+                
+                if (status === 'Paid') totalPaidAmount += totalCost;
+                else totalUnpaidAmount += totalCost;
+
+                if(filter && status !== filter) return; // apply filter
+
+                let bClass = status === 'Paid' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+                
+                tbody.innerHTML += `
+                    <tr class="border-b border-gray-100 hover:bg-gray-50">
+                        <td class="p-3 font-bold">#${so.id}</td>
+                        <td class="p-3 text-gray-500">${so.date}</td>
+                        <td class="p-3 font-medium">${so.customerName}</td>
+                        <td class="p-3 text-right">${Number(so.totalAmount).toLocaleString()} MMK</td>
+                        <td class="p-3 text-right font-bold text-orange-600">${totalCost.toLocaleString()} MMK</td>
+                        <td class="p-3 text-center"><span class="px-2.5 py-0.5 rounded-full text-xs font-semibold ${bClass}">${status}</span></td>
+                        <td class="p-3 text-right">
+                            <button onclick="toggleCreditStatus(${so.id})" class="text-xs bg-slate-800 text-white px-3 py-1 rounded hover:bg-slate-700 transition">Mark ${status === 'Paid' ? 'Unpaid' : 'Paid'}</button>
+                        </td>
+                    </tr>`;
+            });
+            
+            document.getElementById('credit-total-paid').innerText = `${totalPaidAmount.toLocaleString()} MMK`;
+            document.getElementById('credit-total-unpaid').innerText = `${totalUnpaidAmount.toLocaleString()} MMK`;
+        }
+
+        function toggleCreditStatus(id) {
+            let idx = window.salesOrders.findIndex(so => so.id == id);
+            if(idx > -1) {
+                let current = window.salesOrders[idx].creditStatus || 'Unpaid';
+                if(current === 'Paid') {
+                    if(prompt("Enter Admin Password to un-mark a Paid credit (admin22):") !== 'admin22') {
+                        return;
+                    }
+                    window.salesOrders[idx].creditStatus = 'Unpaid';
+                } else {
+                    window.salesOrders[idx].creditStatus = 'Paid';
+                }
+                window.syncToFirebaseCloud();
+                renderCreditTable();
+            }
+        }
+
+        // --- Settings & Invoice Views ---
+        let activeInvoiceIdContext = null;
+        function handleImageUpload(i, k) { let f = i.files[0]; if(!f) return; let r = new FileReader(); r.onload = function(e) { window.appSettings[k] = e.target.result; updateAppImages(); }; r.readAsDataURL(f); }
+        function updateAppImages() {
+            let sL = document.getElementById('side-brand-logo-img'), pL = document.getElementById('preview-logo'), pS = document.getElementById('preview-sign');
+            if(window.appSettings.logoImg) { sL.src = window.appSettings.logoImg; sL.classList.remove('hidden'); pL.src = window.appSettings.logoImg; pL.classList.remove('hidden'); document.getElementById('no-logo-txt').classList.add('hidden'); }
+            if(window.appSettings.signImg) { pS.src = window.appSettings.signImg; pS.classList.remove('hidden'); document.getElementById('no-sign-txt').classList.add('hidden'); }
+        }
+        function initSettingsFormFields() { document.getElementById('side-brand-name').innerText = window.appSettings.logo; ['logo','address','phone','web','email','auth-name','payment-info','terms','arr-payment','arr-delivery','arr-status'].forEach(k => { let val = window.appSettings[k === 'auth-name' ? 'authName' : (k === 'payment-info' ? 'payInfo' : (k.includes('arr-') ? k.replace('-','') : k))]; if(document.getElementById(`set-${k}`)) document.getElementById(`set-${k}`).value = val; }); }
+        function saveSettings() { ['logo','address','phone','web','email','auth-name','payment-info','terms','arr-payment','arr-delivery','arr-status'].forEach(k => { window.appSettings[k === 'auth-name' ? 'authName' : (k === 'payment-info' ? 'payInfo' : (k.includes('arr-') ? k.replace('-','') : k))] = document.getElementById(`set-${k}`).value; }); window.syncToFirebaseCloud(); alert("Settings saved!"); }
+        
+        function viewInvoice(id) {
+            let order = window.salesOrders.find(so => so.id == id); activeInvoiceIdContext = id;
+            document.getElementById('inv-header-logo').innerText = window.appSettings.logo;
+            let iL = document.getElementById('inv-logo-img'), iS = document.getElementById('inv-sign-img');
+            if(window.appSettings.logoImg) { iL.src = window.appSettings.logoImg; iL.classList.remove('hidden'); }
+            if(window.appSettings.signImg) { iS.src = window.appSettings.signImg; iS.classList.remove('hidden'); }
+            document.getElementById('inv-line-address').innerText = `Address: ${window.appSettings.address}`; document.getElementById('inv-line-phone').innerText = `Phone: ${window.appSettings.phone}`; document.getElementById('inv-line-web').innerText = `Web: ${window.appSettings.web}`; document.getElementById('inv-line-email').innerText = `Email: ${window.appSettings.email}`;
+            document.getElementById('inv-lbl-delivery-method').innerText = order.deliveryMethod || 'N/A';
+            if(order.paymentTimestamp && order.paymentTimestamp !== 'N/A') { document.getElementById('inv-lbl-payment-time-block').classList.remove('invisible'); document.getElementById('inv-lbl-payment-time').innerText = order.paymentTimestamp; } else { document.getElementById('inv-lbl-payment-time-block').classList.add('invisible'); }
+            let stampLayer = document.getElementById('invoice-stamp-layer');
+            if(order.payStatus === 'Done') { stampLayer.className = "invoice-stamp stamp-paid"; stampLayer.innerText = "PAID"; stampLayer.classList.remove('hidden'); document.getElementById('inv-title-mode').innerText = "DIGITAL INVOICE"; document.getElementById('refund-btn').classList.remove('hidden'); } else if(order.payStatus === 'Refunded') { stampLayer.className = "invoice-stamp stamp-refund"; stampLayer.innerText = "REFUNDED"; stampLayer.classList.remove('hidden'); document.getElementById('inv-title-mode').innerText = "REFUNDED INVOICE"; document.getElementById('refund-btn').classList.add('hidden'); } else { stampLayer.classList.add('hidden'); document.getElementById('inv-title-mode').innerText = "SALE ORDER"; document.getElementById('refund-btn').classList.add('hidden'); }
+            document.getElementById('inv-lbl-id').innerText = order.id; document.getElementById('inv-lbl-date').innerText = order.date; document.getElementById('inv-lbl-custname').innerText = `${order.customerName} (${order.phone}) - Target: ${order.address || order.region}`;
+            let itemTbody = document.getElementById('inv-items-body'); itemTbody.innerHTML = '';
+            (order.items || []).forEach((item, index) => { itemTbody.innerHTML += `<tr class="border-b border-gray-200 text-gray-800 text-[11px]"><td class="p-2 border-r text-center">${index + 1}</td><td class="p-2 border-r font-medium">${item.desc}</td><td class="p-2 border-r text-center">${item.qty}</td><td class="p-2 border-r text-right">${Number(item.rate).toLocaleString()}</td><td class="p-2 text-right font-semibold">${Number(item.total).toLocaleString()}</td></tr>`; });
+            document.getElementById('inv-calc-sub').innerText = `${Number(order.subtotal).toLocaleString()} MMK`; document.getElementById('inv-calc-disc').innerText = `-${Number(order.discount).toLocaleString()} MMK`; document.getElementById('inv-calc-tax').innerText = `${order.tax} %`; document.getElementById('inv-calc-total').innerText = `${Number(order.totalAmount).toLocaleString()} MMK`;
+            document.getElementById('inv-lbl-availpay').innerText = window.appSettings.payInfo; document.getElementById('inv-lbl-terms').innerText = window.appSettings.terms; document.getElementById('inv-lbl-authname').innerText = window.appSettings.authName; document.getElementById('inv-lbl-authrole').innerText = window.appSettings.authRole;
+            document.getElementById('qr-verify-target').innerHTML = ''; new QRCode(document.getElementById('qr-verify-target'), { text: `${window.appSettings.web}/verify?id=${order.id}`, width: 70, height: 70 });
             let trackingBlock = document.getElementById('qr-tracking-block');
-            if(order.trackingLink) {
-                trackingBlock.classList.remove('hidden');
-                document.getElementById('tracking-title-lbl').innerText = `${order.deliveryMethod} Tracking`;
-                document.getElementById('qr-tracking-target').innerHTML = '';
-                new QRCode(document.getElementById('qr-tracking-target'), { text: order.trackingLink, width: 70, height: 70 });
-            } else { trackingBlock.classList.add('hidden'); }
-
+            if(order.trackingLink) { trackingBlock.classList.remove('hidden'); document.getElementById('tracking-title-lbl').innerText = `${order.deliveryMethod} Tracking`; document.getElementById('qr-tracking-target').innerHTML = ''; new QRCode(document.getElementById('qr-tracking-target'), { text: order.trackingLink, width: 70, height: 70 }); } else { trackingBlock.classList.add('hidden'); }
             document.getElementById('invoice-modal').classList.remove('hidden');
         }
-
-        function triggerRefund() {
-            if(!activeInvoiceIdContext) return;
-            if(confirm("Are you absolutely sure you want to process a full refund loop for this invoice?")) {
-                let idx = window.salesOrders.findIndex(so => so.id == activeInvoiceIdContext);
-                window.salesOrders[idx].payStatus = 'Refunded';
-                window.salesOrders[idx].paymentTimestamp = new Date().toLocaleString('en-US', { hour12: false });
-                
-                window.syncToFirebaseCloud();
-                alert("Transaction refund processed inside cloud matrix.");
-                viewInvoice(activeInvoiceIdContext);
-            }
-        }
-
+        function triggerRefund() { if(!activeInvoiceIdContext) return; if(confirm("Are you sure?")) { let idx = window.salesOrders.findIndex(so => so.id == activeInvoiceIdContext); window.salesOrders[idx].payStatus = 'Refunded'; window.salesOrders[idx].paymentTimestamp = new Date().toLocaleString('en-US', { hour12: false }); window.syncToFirebaseCloud(); viewInvoice(activeInvoiceIdContext); } }
         function closeInvoiceModal() { document.getElementById('invoice-modal').classList.add('hidden'); }
-
-        function renderReportsView() {
-            let totalStockValInvoiced = window.expenses.filter(e => e.cat === "Product Purchase").reduce((s, e) => s + Number(e.amount), 0);
-            document.getElementById('report-stock-in').innerText = `${totalStockValInvoiced.toLocaleString()} MMK`;
-            let calcCogsBase = window.expenses.reduce((s, e) => s + Number(e.amount), 0);
-            document.getElementById('report-cogs').innerText = `${calcCogsBase.toLocaleString()} MMK`;
-        }
     </script>
-
-<div id="verify-modal"
-     class="fixed inset-0 bg-black/60 z-[9999] hidden items-center justify-center p-4">
-
-    <div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl p-8 relative">
-
-        <button onclick="closeVerifyModal()"
-                class="absolute top-4 right-4 text-2xl font-bold">
-            ×
-        </button>
-
-        <div id="verify-content"></div>
-
-    </div>
-</div>
-
-
-<script>
-
-function openVerifyModal(id){
-
-    const invoice =
-        window.salesOrders.find(i => String(i.id) === String(id));
-
-    const modal =
-        document.getElementById("verify-modal");
-
-    const content =
-        document.getElementById("verify-content");
-
-    modal.classList.remove("hidden");
-    modal.classList.add("flex");
-
-    if(invoice){
-
-        content.innerHTML = `
-
-            <div class="text-center">
-
-                <div class="text-6xl mb-4">
-                    ✅
-                </div>
-
-                <h1 class="text-3xl font-bold text-green-600">
-                    VERIFIED INVOICE
-                </h1>
-
-                <p class="text-gray-500 mt-2">
-                    This invoice is authentic.
-                </p>
-
-            </div>
-
-            <div class="grid grid-cols-2 gap-4 mt-8">
-
-                <div>
-                    <p class="text-gray-500 text-sm">
-                        Invoice ID
-                    </p>
-
-                    <p class="font-bold">
-                        ${invoice.id}
-                    </p>
-                </div>
-
-                <div>
-                    <p class="text-gray-500 text-sm">
-                        Customer
-                    </p>
-
-                    <p class="font-bold">
-                        ${invoice.customerName || '-'}
-                    </p>
-                </div>
-
-                <div>
-                    <p class="text-gray-500 text-sm">
-                        Phone
-                    </p>
-
-                    <p class="font-bold">
-                        ${invoice.phone || '-'}
-                    </p>
-                </div>
-
-                <div>
-                    <p class="text-gray-500 text-sm">
-                        Payment
-                    </p>
-
-                    <p class="font-bold text-green-600">
-                        ${invoice.payStatus || 'PAID'}
-                    </p>
-                </div>
-
-            </div>
-
-            <div class="mt-8 border-t pt-6">
-
-                <div class="flex justify-between">
-
-                    <span class="text-gray-500">
-                        Total Amount
-                    </span>
-
-                    <span class="text-2xl font-bold text-blue-700">
-                        ${(Number(invoice.totalAmount || 0)).toLocaleString()} MMK
-                    </span>
-
-                </div>
-
-            </div>
-
-        `;
-
-    }else{
-
-        content.innerHTML = `
-
-            <div class="text-center py-10">
-
-                <div class="text-7xl mb-5">
-                    ❌
-                </div>
-
-                <h1 class="text-3xl font-bold text-red-600">
-                    Invalid Invoice
-                </h1>
-
-                <p class="text-gray-500 mt-4">
-                    Invoice not found.
-                </p>
-
-            </div>
-
-        `;
-    }
-}
-
-function closeVerifyModal(){
-
-    const modal =
-        document.getElementById("verify-modal");
-
-    modal.classList.add("hidden");
-    modal.classList.remove("flex");
-}
-
-window.addEventListener('load', () => {
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const verifyId = urlParams.get("verify");
-
-    if (verifyId) {
-
-        const checkData = setInterval(() => {
-
-            if(window.salesOrders && window.salesOrders.length >= 0){
-
-                openVerifyModal(verifyId);
-                clearInterval(checkData);
-
-            }
-
-        }, 500);
-
-    }
-
-});
-
-</script>
-
 </body>
 </html>
