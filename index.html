@@ -63,10 +63,16 @@
     <!-- Main Workspace -->
     <div id="app-workspace-root" class="flex h-screen overflow-hidden hidden">
         
+        <!-- Mobile Sidebar Backdrop -->
+        <div id="mobile-sidebar-backdrop" class="fixed inset-0 bg-slate-900/60 z-[60] hidden md:hidden" onclick="toggleSidebar()"></div>
+
         <!-- Sidebar -->
-        <div class="w-64 bg-slate-900 text-white p-5 flex flex-col justify-between no-print">
+        <div id="app-sidebar" class="fixed inset-y-0 left-0 z-[70] w-64 bg-slate-900 text-white p-5 flex flex-col justify-between transition-transform duration-300 transform -translate-x-full md:relative md:translate-x-0 no-print h-full">
             <div>
-                <h1 class="text-xl font-bold mb-8 flex flex-col items-center gap-2 text-center">
+                <button onclick="toggleSidebar()" class="md:hidden absolute top-4 right-4 text-gray-400 hover:text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+                <h1 class="text-xl font-bold mb-8 flex flex-col items-center gap-2 text-center mt-4 md:mt-0">
                     <img id="side-brand-logo-img" src="" class="w-16 h-16 rounded-lg object-contain bg-white p-1 hidden" alt="Logo">
                     <span id="side-brand-name">Nimba System</span>
                 </h1>
@@ -91,16 +97,21 @@
             </div>
         </div>
         
-        <div class="flex-1 flex flex-col overflow-y-auto">
+        <div class="flex-1 flex flex-col overflow-y-auto w-full relative">
             
-            <header class="bg-white border-b border-gray-200 px-8 py-4 flex justify-between items-center shadow-sm no-print">
-                <h2 id="page-title" class="text-2xl font-bold text-gray-850">Dashboard</h2>
+            <header class="bg-white border-b border-gray-200 px-4 md:px-8 py-4 flex justify-between items-center shadow-sm no-print sticky top-0 z-40">
+                <div class="flex items-center gap-3">
+                    <button onclick="toggleSidebar()" class="md:hidden text-gray-600 hover:text-gray-900 focus:outline-none">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                    </button>
+                    <h2 id="page-title" class="text-xl md:text-2xl font-bold text-gray-850">Dashboard</h2>
+                </div>
                 <div class="flex items-center gap-4">
-                    <span id="sync-badge" class="bg-amber-100 text-amber-800 text-xs px-3 py-1 rounded-full font-semibold">Connecting Cloud...</span>
+                    <span id="sync-badge" class="bg-amber-100 text-amber-800 text-[10px] md:text-xs px-2 py-1 md:px-3 rounded-full font-semibold">Connecting...</span>
                 </div>
             </header>
 
-            <main class="p-8 flex-1 no-print">
+            <main class="p-4 md:p-8 flex-1 no-print overflow-x-hidden">
                 <!-- Dashboard Tab -->
                 <div id="tab-dashboard" class="tab-content space-y-6">
                     <div class="bg-white p-4 rounded-xl shadow-xs border border-gray-100 flex flex-wrap gap-4 items-center">
@@ -153,10 +164,10 @@
                         </div>
                     </div>
 
-                    <div class="bg-white p-6 rounded-xl shadow-xs border border-gray-100">
+                    <div class="bg-white p-4 md:p-6 rounded-xl shadow-xs border border-gray-100">
                         <h4 class="text-lg font-semibold mb-4">Recent Sales Breakdown</h4>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left border-collapse">
+                        <div class="overflow-x-auto w-full">
+                            <table class="w-full text-left border-collapse whitespace-nowrap">
                                 <thead>
                                     <tr class="bg-gray-50 border-b border-gray-200 text-gray-600 text-sm font-semibold">
                                         <th class="p-3 sortable-header" onclick="sortDashboardTable('id')">SO ID <span id="dash-sort-id"></span></th>
@@ -181,12 +192,12 @@
                                 <h3 class="text-xl font-bold text-slate-800">Internal Team Work Cards</h3>
                                 <p class="text-xs text-gray-500 mt-1">Production and operations verification workspace dashboard</p>
                             </div>
-                            <div class="flex gap-2 w-full md:w-auto">
-                                <input type="text" id="card-search" oninput="renderInternalCards()" placeholder="Search Name or Phone..." class="p-2 border border-gray-300 rounded-lg text-sm focus:outline-blue-500">
-                                <select id="card-filter-status" onchange="renderInternalCards()" class="p-2 border border-gray-300 rounded-lg text-sm">
+                            <div class="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+                                <input type="text" id="card-search" oninput="renderInternalCards()" placeholder="Search Name or Phone..." class="w-full md:w-auto p-2 border border-gray-300 rounded-lg text-sm focus:outline-blue-500">
+                                <select id="card-filter-status" onchange="renderInternalCards()" class="w-full md:w-auto p-2 border border-gray-300 rounded-lg text-sm">
                                     <option value="">All Delivery Status</option>
                                 </select>
-                                <select id="card-sort-date" onchange="renderInternalCards()" class="p-2 border border-gray-300 rounded-lg text-sm bg-gray-50">
+                                <select id="card-sort-date" onchange="renderInternalCards()" class="w-full md:w-auto p-2 border border-gray-300 rounded-lg text-sm bg-gray-50">
                                     <option value="desc">Newest First</option>
                                     <option value="asc">Oldest First</option>
                                 </select>
@@ -198,26 +209,26 @@
 
                 <!-- Sales Tab -->
                 <div id="tab-sales" class="tab-content hidden space-y-6">
-                    <div class="flex justify-between items-center">
-                        <div class="flex gap-3 w-3/4">
-                            <input type="text" id="so-search" oninput="filterSales()" placeholder="Search Name, Phone, or SO ID..." class="w-1/3 p-2 border border-gray-300 rounded-lg text-sm focus:outline-blue-500">
-                            <select id="so-filter-payment" onchange="filterSales()" class="p-2 border border-gray-300 rounded-lg text-sm">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div class="flex flex-col md:flex-row gap-3 w-full md:w-3/4">
+                            <input type="text" id="so-search" oninput="filterSales()" placeholder="Search Name, Phone, or SO ID..." class="w-full md:w-1/3 p-2 border border-gray-300 rounded-lg text-sm focus:outline-blue-500">
+                            <select id="so-filter-payment" onchange="filterSales()" class="w-full md:w-auto p-2 border border-gray-300 rounded-lg text-sm">
                                 <option value="">All Payments</option>
                                 <option value="Pending">Pending</option>
                                 <option value="Done">Done</option>
                                 <option value="Refunded">Refunded</option>
                             </select>
-                            <select id="so-filter-delivery" onchange="filterSales()" class="p-2 border border-gray-300 rounded-lg text-sm">
+                            <select id="so-filter-delivery" onchange="filterSales()" class="w-full md:w-auto p-2 border border-gray-300 rounded-lg text-sm">
                                 <option value="">All Delivery Status</option>
                             </select>
                         </div>
-                        <button onclick="openNewOrderModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1">
+                        <button onclick="openNewOrderModal()" class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold flex justify-center items-center gap-1">
                             + Create Sale Order
                         </button>
                     </div>
                     
-                    <div class="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden">
-                        <table class="w-full text-left border-collapse">
+                    <div class="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden w-full overflow-x-auto">
+                        <table class="w-full text-left border-collapse whitespace-nowrap">
                             <thead>
                                 <tr class="bg-gray-50 border-b border-gray-200 text-gray-600 text-sm font-semibold">
                                     <th class="p-3">SO ID</th>
@@ -236,7 +247,7 @@
 
                 <!-- Purchases Tab -->
                 <div id="tab-purchases" class="tab-content hidden space-y-6">
-                    <form id="expense-form" onsubmit="saveExpense(event)" class="bg-white p-6 rounded-xl shadow-xs border border-gray-100 grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                    <form id="expense-form" onsubmit="saveExpense(event)" class="bg-white p-4 md:p-6 rounded-xl shadow-xs border border-gray-100 grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
                         <input type="hidden" id="edit-exp-index" value="">
                         <div>
                             <label class="block text-xs font-semibold text-gray-600 mb-1">Date & Time</label>
@@ -259,7 +270,7 @@
                                 <option value="Other">Other Expenses</option>
                             </select>
                         </div>
-                        <button type="submit" id="btn-submit-expense" class="bg-slate-900 text-white p-2 rounded-lg font-semibold text-sm hover:bg-slate-800">Add Record</button>
+                        <button type="submit" id="btn-submit-expense" class="w-full md:w-auto bg-slate-900 text-white p-2 rounded-lg font-semibold text-sm hover:bg-slate-800">Add Record</button>
                     </form>
 
                     <div class="bg-white p-4 rounded-xl shadow-xs border border-gray-100 flex flex-wrap gap-4 items-center">
@@ -293,8 +304,8 @@
                         </div>
                     </div>
 
-                    <div class="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden">
-                        <table class="w-full text-left border-collapse">
+                    <div class="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden w-full overflow-x-auto">
+                        <table class="w-full text-left border-collapse whitespace-nowrap">
                             <thead>
                                 <tr class="bg-gray-50 border-b border-gray-200 text-gray-600 text-sm font-semibold">
                                     <th class="p-3 sortable-header" onclick="sortExpenseTable('datetime')">Date & Time <span id="exp-sort-datetime"></span></th>
@@ -311,7 +322,7 @@
 
                 <!-- Customers Tab -->
                 <div id="tab-customers" class="tab-content hidden space-y-6">
-                    <form id="customer-form" onsubmit="saveCustomer(event)" class="bg-white p-6 rounded-xl shadow-xs border border-gray-100 grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                    <form id="customer-form" onsubmit="saveCustomer(event)" class="bg-white p-4 md:p-6 rounded-xl shadow-xs border border-gray-100 grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
                         <div>
                             <label class="block text-xs font-semibold text-gray-600 mb-1">Customer Name</label>
                             <input type="text" id="cust-name" required class="w-full p-2 border border-gray-300 rounded-lg text-sm">
@@ -328,15 +339,15 @@
                             <label class="block text-xs font-semibold text-gray-600 mb-1">Address</label>
                             <input type="text" id="cust-address" required class="w-full p-2 border border-gray-300 rounded-lg text-sm">
                         </div>
-                        <button type="submit" class="bg-blue-600 text-white p-2 rounded-lg font-semibold text-sm hover:bg-blue-700">Add Customer</button>
+                        <button type="submit" class="w-full md:w-auto bg-blue-600 text-white p-2 rounded-lg font-semibold text-sm hover:bg-blue-700">Add Customer</button>
                     </form>
                     
                     <div class="flex justify-between items-center">
-                        <input type="text" id="cust-search" oninput="renderCustomersTable()" placeholder="Search Name or Phone..." class="w-1/3 p-2 border border-gray-300 rounded-lg text-sm focus:outline-blue-500">
+                        <input type="text" id="cust-search" oninput="renderCustomersTable()" placeholder="Search Name or Phone..." class="w-full md:w-1/3 p-2 border border-gray-300 rounded-lg text-sm focus:outline-blue-500">
                     </div>
 
-                    <div class="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden">
-                        <table class="w-full text-left border-collapse">
+                    <div class="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden w-full overflow-x-auto">
+                        <table class="w-full text-left border-collapse whitespace-nowrap">
                             <thead>
                                 <tr class="bg-gray-50 border-b border-gray-200 text-gray-600 text-sm font-semibold">
                                     <th class="p-3">Name</th>
@@ -369,15 +380,15 @@
                         </div>
 
                         <div class="flex gap-4 mb-4">
-                            <select id="credit-filter-status" onchange="renderCreditTable()" class="p-2 border border-gray-300 rounded-lg text-sm">
+                            <select id="credit-filter-status" onchange="renderCreditTable()" class="w-full md:w-auto p-2 border border-gray-300 rounded-lg text-sm">
                                 <option value="">All Status</option>
                                 <option value="Unpaid">Unpaid</option>
                                 <option value="Paid">Paid</option>
                             </select>
                         </div>
 
-                        <div class="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden">
-                            <table class="w-full text-left border-collapse">
+                        <div class="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden w-full overflow-x-auto">
+                            <table class="w-full text-left border-collapse whitespace-nowrap">
                                 <thead>
                                     <tr class="bg-gray-50 border-b border-gray-200 text-gray-600 text-sm font-semibold">
                                         <th class="p-3">SO ID</th>
@@ -551,9 +562,9 @@
                         <input type="number" id="item-cost" placeholder="Actual Cost (Credit Base)" class="p-2 border border-gray-300 rounded-lg text-sm">
                         <input type="number" id="item-rate" placeholder="Sale Price" class="p-2 border border-gray-300 rounded-lg text-sm">
                     </div>
-                    <button type="button" id="btn-add-item" onclick="addItemToGrid()" class="bg-slate-900 text-white text-xs px-4 py-2 rounded font-medium hover:bg-slate-800">+ Add / Update Item</button>
-                    <div class="mt-3 border rounded-lg overflow-hidden">
-                        <table class="w-full text-left text-xs">
+                    <button type="button" id="btn-add-item" onclick="addItemToGrid()" class="w-full md:w-auto bg-slate-900 text-white text-xs px-4 py-2 rounded font-medium hover:bg-slate-800">+ Add / Update Item</button>
+                    <div class="mt-3 border rounded-lg overflow-hidden w-full overflow-x-auto">
+                        <table class="w-full text-left text-xs whitespace-nowrap">
                             <thead class="bg-gray-100 border-b">
                                 <tr>
                                     <th class="p-2">Description</th>
@@ -852,6 +863,18 @@
 
         window.onload = function() { setDefaultExpenseDateTime(); };
 
+        function toggleSidebar() {
+            const sidebar = document.getElementById('app-sidebar');
+            const backdrop = document.getElementById('mobile-sidebar-backdrop');
+            if(sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+                backdrop.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                backdrop.classList.add('hidden');
+            }
+        }
+
         function switchTab(tabId, element) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.getElementById(`tab-${tabId}`).classList.remove('hidden');
@@ -865,6 +888,14 @@
             let displayTitle = tabId.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
             document.getElementById('page-title').innerText = displayTitle;
             currentTab = tabId;
+
+            // Close sidebar on mobile after navigating
+            if(window.innerWidth < 768) {
+                const sidebar = document.getElementById('app-sidebar');
+                if(!sidebar.classList.contains('-translate-x-full')) {
+                    toggleSidebar();
+                }
+            }
 
             if(tabId === 'dashboard') renderDashboard();
             if(tabId === 'internal-cards') renderInternalCards();
