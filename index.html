@@ -712,7 +712,7 @@
             
             get(ref(db, 'business_data/appSettings')).then(settingsSnap => {                
                 if(settingsSnap.exists()) {                    
-                    document.getElementById('v-brand-name').innerText = settingsSnap.val().logo || "NIMBA SYSTEM";                
+                    document.getElementById('v-brand-name').innerText = settingsSnap.val().logo || "Soe Business";                
                 }            
             });
             
@@ -798,7 +798,7 @@
                         window.expenses = data.expenses || [];                        
                         window.customers = data.customers || [];                        
                         window.appSettings = data.appSettings || {                            
-                            logo: "Nimba System", address: "No. 123", phone: "+959 123 456", web: "https://", email: "info@",                            
+                            logo: "Soe Business", address: "No. 123", phone: "+959 123 456", web: "https://", email: "info@",                            
                             authName: "Admin", authRole: "Officer", payInfo: "KBZ Pay", terms: "1. No return",                            
                             arrPayment: "KBZPay, CBPay, Cash", arrDelivery: "Express, Pick up", arrStatus: "Pending, Dispatched, Delivered",                            
                             logoImg: "", signImg: ""                        
